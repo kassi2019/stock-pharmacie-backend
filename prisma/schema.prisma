@@ -1,0 +1,395 @@
+// Schéma Prisma — module Gestion de stock (base bd_stock_pharmacie)
+// SQL Server ne gère pas les enums Prisma : les valeurs autorisées sont
+// documentées en commentaire et définies dans src/common/constantes.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Utilisateurs et journal (communs à l'application) ─────────────────────
+
+model Utilisateur {
+  id                Int       @id @default(autoincrement())
+  matricule         String    @unique @db.NVarChar(30)
+  nom               String    @db.NVarChar(100)
+  prenoms           String?   @db.NVarChar(150)
+  telephone         String?   @db.NVarChar(50)
+  email             String?   @db.NVarChar(150)
+  derniereConnexion DateTime?
+  fonctionId        Int?
+  fonction          Fonction? @relation(fields: [fonctionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  motDePasse        String    @db.NVarChar(100)
+  /// ADMIN | RESPONSABLE | AGENT | CAISSIER | MEDECIN | DIRECTION | SYSTEME
+  role              String    @db.NVarChar(20)
+  actif             Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+
+  receptions Reception[]
+  mouvements Mouvement[]
+  journal    JournalAction[]
+  prixVente  PrixVente[]
+
+  dispensations         Dispensation[]    @relation("DispensationAuteur")
+  dispensationsAnnulees Dispensation[]    @relation("DispensationAnnulation")
+  retraits              Retrait[]
+  inventairesOuverts    Inventaire[]      @relation("InventaireOuverture")
+  inventairesValides    Inventaire[]      @relation("InventaireValidation")
+  lignesComptees        InventaireLigne[]
+}
+
+model JournalAction {
+  id            Int          @id @default(autoincrement())
+  date          DateTime     @default(now())
+  utilisateurId Int?
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// CREATION | MODIFICATION | SUPPRESSION | IMPORT | ...
+  action        String       @db.NVarChar(30)
+  entite        String       @db.NVarChar(50)
+  entiteId      Int?
+  details       String?      @db.NVarChar(Max)
+
+  @@index([date])
+  @@index([entite, entiteId])
+}
+
+// ─── Paramétrage : formes / catégories et fournisseurs ─────────────────────
+
+model Forme {
+  id       Int       @id @default(autoincrement())
+  /// FRM-0001 si non saisi
+  code     String    @unique @db.NVarChar(30)
+  libelle  String    @unique @db.NVarChar(80)
+  produits Produit[]
+}
+
+model Famille {
+  inventaires Inventaire[]
+  id          Int          @id @default(autoincrement())
+  /// FAM-0001 si non saisi
+  code        String       @unique @db.NVarChar(30)
+  libelle     String       @unique @db.NVarChar(100)
+  categorie   String?      @db.NVarChar(100)
+  produits    Produit[]
+}
+
+model UniteVente {
+  id       Int       @id @default(autoincrement())
+  /// UNV-0001 si non saisi
+  code     String    @unique @db.NVarChar(30)
+  libelle  String    @unique @db.NVarChar(60)
+  produits Produit[]
+}
+
+model Fonction {
+  id           Int           @id @default(autoincrement())
+  /// FCT-0001 si non saisi
+  code         String        @unique @db.NVarChar(30)
+  libelle      String        @unique @db.NVarChar(100)
+  utilisateurs Utilisateur[]
+}
+
+model Fournisseur {
+  id         Int         @id @default(autoincrement())
+  /// FRN-0001 si non saisi
+  code       String      @unique @db.NVarChar(30)
+  /// Raison sociale
+  nom        String      @unique @db.NVarChar(150)
+  contact    String?     @db.NVarChar(150)
+  telephone  String?     @db.NVarChar(50)
+  email      String?     @db.NVarChar(150)
+  adresse    String?     @db.NVarChar(255)
+  actif      Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  lots       Lot[]
+  receptions Reception[]
+}
+
+// ─── Catalogue ─────────────────────────────────────────────────────────────
+
+model Produit {
+  id               Int         @id @default(autoincrement())
+  /// MED-0001 si non saisi
+  code             String      @unique @db.NVarChar(30)
+  /// Nom commercial ou DCI, dosage et forme
+  designation      String      @unique @db.NVarChar(200)
+  /// Dosage (ex. 500 MG)
+  dosage           String?     @db.NVarChar(50)
+  formeId          Int?
+  forme            Forme?      @relation(fields: [formeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  familleId        Int?
+  famille          Famille?    @relation(fields: [familleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Unité principale de vente (BOÎTE, FLACON, TUBE…) ; la plaque reste la sous-unité
+  uniteVenteId     Int?
+  uniteVente       UniteVente? @relation(fields: [uniteVenteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Vente possible à la boîte / à la plaque
+  venteBoite       Boolean     @default(true)
+  ventePlaque      Boolean     @default(false)
+  /// Le stock est tenu en plaques (unité de base) ; 1 si vente à l'unité seule
+  plaquesParBoite  Int         @default(1)
+  consommable      Boolean     @default(false)
+  /// Seuil d'alerte saisi (stock minimum, en unités de vente) ; 0 = calcul sur la couverture
+  seuilAlerte      Int         @default(0)
+  prixVenteBoite   Decimal     @default(0) @db.Decimal(18, 2)
+  prixVentePlaque  Decimal     @default(0) @db.Decimal(18, 2)
+  /// Prix d'achat d'une plaque, repris du dernier lot reçu
+  prixAchatPlaque  Decimal     @default(0) @db.Decimal(18, 2)
+  /// Calculés (chapitre 13) : consommation journalière Qs et état du stock
+  consoJournaliere Decimal     @default(0) @db.Decimal(18, 4)
+  /// RUPTURE | SANS_CONSO | SOUS_STOCK | BIEN_STOCKE | SURSTOCK
+  etatStock        String      @default("RUPTURE") @db.NVarChar(20)
+  actif            Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  lots               Lot[]
+  lignesReception    ReceptionLigne[]
+  mouvements         Mouvement[]
+  prixVente          PrixVente[]
+  lignesDispensation DispensationLigne[]
+  retraits           Retrait[]
+  lignesInventaire   InventaireLigne[]
+
+  @@index([etatStock])
+}
+
+// ─── Lots et entrées ───────────────────────────────────────────────────────
+
+model Lot {
+  id               Int          @id @default(autoincrement())
+  produitId        Int
+  produit          Produit      @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  numeroLot        String       @db.NVarChar(60)
+  datePeremption   DateTime     @db.Date
+  fournisseurId    Int?
+  fournisseur      Fournisseur? @relation(fields: [fournisseurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Prix d'achat d'une plaque (moyenne pondérée des réceptions du lot)
+  prixAchatPlaque  Decimal      @default(0) @db.Decimal(18, 2)
+  /// Quantité restante en plaques
+  quantiteRestante Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  lignesReception  ReceptionLigne[]
+  mouvements       Mouvement[]
+  retraits         Retrait[]
+  lignesInventaire InventaireLigne[]
+
+  @@unique([produitId, numeroLot])
+  @@index([datePeremption])
+}
+
+model Reception {
+  id            Int              @id @default(autoincrement())
+  /// REC-AAAA-00001
+  numero        String           @unique @db.NVarChar(30)
+  fournisseurId Int
+  fournisseur   Fournisseur      @relation(fields: [fournisseurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dateReception DateTime         @db.Date
+  observation   String?          @db.NVarChar(500)
+  montantTotal  Decimal          @default(0) @db.Decimal(18, 2)
+  utilisateurId Int
+  utilisateur   Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt     DateTime         @default(now())
+  lignes        ReceptionLigne[]
+
+  @@index([dateReception])
+}
+
+model ReceptionLigne {
+  id                Int       @id @default(autoincrement())
+  receptionId       Int
+  reception         Reception @relation(fields: [receptionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  produitId         Int
+  produit           Produit   @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lotId             Int
+  lot               Lot       @relation(fields: [lotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  numeroLot         String    @db.NVarChar(60)
+  datePeremption    DateTime  @db.Date
+  /// Quantité et unité saisies
+  quantite          Int
+  /// BOITE | PLAQUE
+  unite             String    @db.NVarChar(10)
+  /// Quantité convertie en plaques
+  quantitePlaques   Int
+  /// Prix d'achat de l'unité saisie
+  prixAchatUnitaire Decimal   @db.Decimal(18, 2)
+  montant           Decimal   @db.Decimal(18, 2)
+}
+
+// ─── Mouvements de stock ───────────────────────────────────────────────────
+
+model Mouvement {
+  id            Int         @id @default(autoincrement())
+  date          DateTime    @default(now())
+  /// ENTREE | SORTIE | RETRAIT | CORRECTIF | ANNULATION
+  type          String      @db.NVarChar(20)
+  produitId     Int
+  produit       Produit     @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lotId         Int
+  lot           Lot         @relation(fields: [lotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Quantité signée en plaques (+ entrée, − sortie)
+  quantite      Int
+  quantiteAvant Int
+  quantiteApres Int
+  /// Prix d'achat d'une plaque au moment du mouvement (valorisation)
+  prixUnitaire  Decimal     @default(0) @db.Decimal(18, 2)
+  motif         String?     @db.NVarChar(255)
+  /// RECEPTION | ORDONNANCE | INVENTAIRE | RETRAIT
+  documentType  String?     @db.NVarChar(20)
+  documentId    Int?
+  utilisateurId Int
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([date])
+  @@index([produitId, date])
+  @@index([type, date])
+}
+
+// ─── Paramètres généraux (§ 13.2 et fiche de la pharmacie) ──────────────────
+
+model Parametre {
+  cle         String   @id @db.NVarChar(60)
+  valeur      String   @db.NVarChar(1000)
+  description String?  @db.NVarChar(255)
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Historique des prix de vente (un prix n'est jamais modifié : nouveau prix daté) ───
+
+model PrixVente {
+  id              Int         @id @default(autoincrement())
+  produitId       Int
+  produit         Produit     @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  prixBoite       Decimal     @db.Decimal(18, 2)
+  prixPlaque      Decimal     @db.Decimal(18, 2)
+  dateEffet       DateTime    @db.Date
+  /// Vide = prix en cours
+  dateFin         DateTime?   @db.Date
+  /// Rempli si le prix en cours a été corrigé (erreur de saisie)
+  motifCorrection String?     @db.NVarChar(255)
+  utilisateurId   Int
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt       DateTime    @default(now())
+
+  @@index([produitId, dateEffet])
+}
+
+/// Dispensation d'une ordonnance (§ 10.1) : sortie de stock en FEFO.
+model Dispensation {
+  id              Int                 @id @default(autoincrement())
+  /// DSP-AAAA-00001
+  numero          String              @unique @db.NVarChar(30)
+  date            DateTime            @default(now())
+  patient         String              @db.NVarChar(150)
+  /// N° de passage du patient à la clinique
+  numeroPassage   String?             @db.NVarChar(50)
+  prescripteur    String?             @db.NVarChar(150)
+  montantTotal    Decimal             @default(0) @db.Decimal(18, 2)
+  /// VALIDEE | ANNULEE
+  statut          String              @default("VALIDEE") @db.NVarChar(20)
+  motifAnnulation String?             @db.NVarChar(255)
+  dateAnnulation  DateTime?
+  utilisateurId   Int
+  utilisateur     Utilisateur         @relation("DispensationAuteur", fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  annuleParId     Int?
+  annulePar       Utilisateur?        @relation("DispensationAnnulation", fields: [annuleParId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lignes          DispensationLigne[]
+
+  @@index([date])
+}
+
+model DispensationLigne {
+  id              Int          @id @default(autoincrement())
+  dispensationId  Int
+  dispensation    Dispensation @relation(fields: [dispensationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  produitId       Int
+  produit         Produit      @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// BOITE (unité de vente) | PLAQUE
+  unite           String       @db.NVarChar(10)
+  quantite        Int
+  /// Quantité sortie du stock, en plaques
+  quantitePlaques Int
+  prixUnitaire    Decimal      @default(0) @db.Decimal(18, 2)
+  montant         Decimal      @default(0) @db.Decimal(18, 2)
+}
+
+/// Retrait d'un lot (§ 10.2 et § 11) : retour fournisseur, périmé, casse, perte, autre.
+model Retrait {
+  id            Int         @id @default(autoincrement())
+  /// RET-AAAA-00001
+  numero        String      @unique @db.NVarChar(30)
+  date          DateTime    @default(now())
+  produitId     Int
+  produit       Produit     @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lotId         Int
+  lot           Lot         @relation(fields: [lotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Quantité retirée, en plaques
+  quantite      Int
+  motif         String      @db.NVarChar(40)
+  precision     String?     @db.NVarChar(255)
+  /// Valeur au prix d'achat du lot
+  valeur        Decimal     @default(0) @db.Decimal(18, 2)
+  /// Retrait automatique des périmés (tâche de nuit)
+  automatique   Boolean     @default(false)
+  utilisateurId Int
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([date])
+}
+
+/// Inventaire par lot (§ 12) : complet, par famille ou par produit.
+model Inventaire {
+  id             Int               @id @default(autoincrement())
+  /// INV-AAAA-00001
+  numero         String            @unique @db.NVarChar(30)
+  dateOuverture  DateTime          @default(now())
+  /// COMPLET | FAMILLE | PRODUIT
+  perimetre      String            @db.NVarChar(20)
+  familleId      Int?
+  famille        Famille?          @relation(fields: [familleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Produit inventorié (inventaire PRODUIT)
+  produitId      Int?
+  observation    String?           @db.NVarChar(500)
+  /// EN_COURS | VALIDE | ANNULE
+  statut         String            @default("EN_COURS") @db.NVarChar(20)
+  ouvertParId    Int
+  ouvertPar      Utilisateur       @relation("InventaireOuverture", fields: [ouvertParId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  valideParId    Int?
+  validePar      Utilisateur?      @relation("InventaireValidation", fields: [valideParId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dateValidation DateTime?
+  lignes         InventaireLigne[]
+
+  @@index([statut])
+}
+
+/// Une ligne par lot compté. Quantités en plaques (unité de base du stock).
+model InventaireLigne {
+  id                Int          @id @default(autoincrement())
+  inventaireId      Int
+  inventaire        Inventaire   @relation(fields: [inventaireId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  produitId         Int
+  produit           Produit      @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Vide pour un lot trouvé au comptage (créé à la validation)
+  lotId             Int?
+  lot               Lot?         @relation(fields: [lotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  numeroLot         String       @db.NVarChar(60)
+  datePeremption    DateTime     @db.Date
+  /// Lot trouvé au comptage (absent du stock théorique)
+  lotTrouve         Boolean      @default(false)
+  /// Stock théorique du lot à l'ouverture de l'inventaire
+  quantiteTheorique Int
+  /// Quantité comptée ; vide = pas encore compté
+  quantiteComptee   Int?
+  justification     String?      @db.NVarChar(255)
+  /// Prix d'achat d'une plaque (valorisation de l'écart)
+  prixAchatPlaque   Decimal      @default(0) @db.Decimal(18, 2)
+  compteParId       Int?
+  comptePar         Utilisateur? @relation(fields: [compteParId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dateComptage      DateTime?
+}

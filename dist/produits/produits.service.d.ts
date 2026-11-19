@@ -1,0 +1,166 @@
+import { Prisma } from '@prisma/client';
+import { Role } from '../common/constantes';
+import { JournalService } from '../journal/journal.service';
+import { ParametresService } from '../parametres/parametres.service';
+import { PrixService } from '../prix/prix.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { EtatStockService } from '../stock/etat-stock.service';
+import { CreerProduitAvecStockDto, ModifierProduitDto } from './produit.dto';
+export type FiltresProduits = {
+    recherche?: string;
+    etat?: string;
+    actif?: boolean;
+    formeId?: number;
+    familleId?: number;
+};
+export declare class ProduitsService {
+    private readonly prisma;
+    private readonly journal;
+    private readonly etats;
+    private readonly parametres;
+    private readonly prix;
+    constructor(prisma: PrismaService, journal: JournalService, etats: EtatStockService, parametres: ParametresService, prix: PrixService);
+    private masquer;
+    lister(filtres: FiltresProduits, role: Role): Promise<Partial<{
+        stockDisponible: number;
+        forme: {
+            id: number;
+            code: string;
+            libelle: string;
+        } | null;
+        famille: {
+            id: number;
+            code: string;
+            libelle: string;
+            categorie: string | null;
+        } | null;
+        uniteVente: {
+            id: number;
+            code: string;
+            libelle: string;
+        } | null;
+        id: number;
+        updatedAt: Date;
+        actif: boolean;
+        code: string;
+        designation: string;
+        dosage: string | null;
+        formeId: number | null;
+        familleId: number | null;
+        uniteVenteId: number | null;
+        venteBoite: boolean;
+        ventePlaque: boolean;
+        plaquesParBoite: number;
+        consommable: boolean;
+        seuilAlerte: number;
+        prixVenteBoite: Prisma.Decimal;
+        prixVentePlaque: Prisma.Decimal;
+        prixAchatPlaque: Prisma.Decimal;
+        consoJournaliere: Prisma.Decimal;
+        etatStock: string;
+        createdAt: Date;
+    }>[]>;
+    trouver(id: number, role: Role): Promise<Partial<{
+        lots: {
+            perime: boolean;
+            prochePeremption: boolean;
+            fournisseur: {
+                id: number;
+                nom: string;
+            } | null;
+            id: number;
+            updatedAt: Date;
+            prixAchatPlaque: Prisma.Decimal;
+            createdAt: Date;
+            produitId: number;
+            numeroLot: string;
+            datePeremption: Date;
+            fournisseurId: number | null;
+            quantiteRestante: number;
+        }[];
+        stockDisponible: number;
+        forme: {
+            id: number;
+            code: string;
+            libelle: string;
+        } | null;
+        famille: {
+            id: number;
+            code: string;
+            libelle: string;
+            categorie: string | null;
+        } | null;
+        uniteVente: {
+            id: number;
+            code: string;
+            libelle: string;
+        } | null;
+        id: number;
+        updatedAt: Date;
+        actif: boolean;
+        code: string;
+        designation: string;
+        dosage: string | null;
+        formeId: number | null;
+        familleId: number | null;
+        uniteVenteId: number | null;
+        venteBoite: boolean;
+        ventePlaque: boolean;
+        plaquesParBoite: number;
+        consommable: boolean;
+        seuilAlerte: number;
+        prixVenteBoite: Prisma.Decimal;
+        prixVentePlaque: Prisma.Decimal;
+        prixAchatPlaque: Prisma.Decimal;
+        consoJournaliere: Prisma.Decimal;
+        etatStock: string;
+        createdAt: Date;
+    }>>;
+    private resoudre;
+    private liens;
+    private donnees;
+    creer(dtoComplet: CreerProduitAvecStockDto, utilisateurId: number): Promise<{
+        id: number;
+        updatedAt: Date;
+        actif: boolean;
+        code: string;
+        designation: string;
+        dosage: string | null;
+        formeId: number | null;
+        familleId: number | null;
+        uniteVenteId: number | null;
+        venteBoite: boolean;
+        ventePlaque: boolean;
+        plaquesParBoite: number;
+        consommable: boolean;
+        seuilAlerte: number;
+        prixVenteBoite: Prisma.Decimal;
+        prixVentePlaque: Prisma.Decimal;
+        prixAchatPlaque: Prisma.Decimal;
+        consoJournaliere: Prisma.Decimal;
+        etatStock: string;
+        createdAt: Date;
+    }>;
+    modifier(id: number, dto: ModifierProduitDto, utilisateurId: number): Promise<{
+        id: number;
+        updatedAt: Date;
+        actif: boolean;
+        code: string;
+        designation: string;
+        dosage: string | null;
+        formeId: number | null;
+        familleId: number | null;
+        uniteVenteId: number | null;
+        venteBoite: boolean;
+        ventePlaque: boolean;
+        plaquesParBoite: number;
+        consommable: boolean;
+        seuilAlerte: number;
+        prixVenteBoite: Prisma.Decimal;
+        prixVentePlaque: Prisma.Decimal;
+        prixAchatPlaque: Prisma.Decimal;
+        consoJournaliere: Prisma.Decimal;
+        etatStock: string;
+        createdAt: Date;
+    }>;
+}

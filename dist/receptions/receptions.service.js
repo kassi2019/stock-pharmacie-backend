@@ -40,7 +40,7 @@ let ReceptionsService = class ReceptionsService {
             where,
             orderBy: [{ dateReception: 'desc' }, { id: 'desc' }],
             include: {
-                fournisseur: { select: { id: true, nom: true } },
+                fournisseur: { select: { id: true, nom: true, code: true } },
                 utilisateur: { select: { matricule: true, nom: true, prenoms: true } },
                 _count: { select: { lignes: true } },
             },
@@ -54,7 +54,11 @@ let ReceptionsService = class ReceptionsService {
                 utilisateur: { select: { matricule: true, nom: true, prenoms: true } },
                 lignes: {
                     orderBy: { id: 'asc' },
-                    include: { produit: { select: { id: true, designation: true, plaquesParBoite: true } } },
+                    include: {
+                        produit: {
+                            select: { id: true, code: true, designation: true, plaquesParBoite: true, uniteVente: { select: { libelle: true } } },
+                        },
+                    },
                 },
             },
         });
@@ -114,6 +118,8 @@ let ReceptionsService = class ReceptionsService {
                     numero,
                     fournisseurId: dto.fournisseurId,
                     dateReception,
+                    numFactureFourn: dto.numFactureFourn ?? null,
+                    numBonLivraison: dto.numBonLivraison ?? null,
                     observation: dto.observation ?? null,
                     utilisateurId,
                 },
@@ -169,6 +175,7 @@ let ReceptionsService = class ReceptionsService {
                         quantitePlaques,
                         prixAchatUnitaire: l.prixAchatUnitaire,
                         montant,
+                        observation: l.observation ?? null,
                     },
                 });
                 await tx.mouvement.create({

@@ -87,6 +87,8 @@ export declare class FournisseursService {
             montantTotal: Prisma.Decimal;
             numero: string;
             dateReception: Date;
+            numFactureFourn: string | null;
+            numBonLivraison: string | null;
             observation: string | null;
         })[];
         total: number;

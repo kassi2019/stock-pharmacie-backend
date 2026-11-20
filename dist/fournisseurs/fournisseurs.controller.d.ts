@@ -61,6 +61,8 @@ export declare class FournisseursController {
             montantTotal: import("@prisma/client/runtime/library").Decimal;
             numero: string;
             dateReception: Date;
+            numFactureFourn: string | null;
+            numBonLivraison: string | null;
             observation: string | null;
         })[];
         total: number;

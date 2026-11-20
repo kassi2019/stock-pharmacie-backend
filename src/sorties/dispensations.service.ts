@@ -121,7 +121,7 @@ export class DispensationsService {
         const dispensation = await tx.dispensation.create({
           data: {
             numero,
-            patient: dto.patient,
+            patient: dto.patient ?? '', // colonne non nulle : vide si non saisi
             numeroPassage: dto.numeroPassage ?? null,
             prescripteur: dto.prescripteur ?? null,
             montantTotal,
@@ -152,7 +152,7 @@ export class DispensationsService {
                 quantiteAvant: part.quantiteAvant,
                 quantiteApres: part.quantiteApres,
                 prixUnitaire: part.prixAchatPlaque,
-                motif: `DISPENSATION ${numero} — ${dto.patient}`,
+                motif: dto.patient ? `DISPENSATION ${numero} — ${dto.patient}` : `DISPENSATION ${numero}`,
                 documentType: DOCUMENTS.ORDONNANCE,
                 documentId: dispensation.id,
                 utilisateurId,

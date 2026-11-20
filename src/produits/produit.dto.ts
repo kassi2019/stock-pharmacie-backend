@@ -44,7 +44,7 @@ export class CreerProduitDto {
 
   @IsOptional() @IsBoolean() consommable?: boolean;
 
-  /** Seuil d'alerte (stock minimum, en unités de vente) ; 0 = pas d'alerte saisie */
+  /** Seuil d'alerte (stock minimum, en unités de comptage) ; 0 = pas d'alerte saisie */
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) seuilAlerte?: number;
 
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) prixVenteBoite?: number;
@@ -55,13 +55,13 @@ export class CreerProduitDto {
 
 /**
  * Création : stock initial facultatif, comme dans l'application de district.
- * Quantité en unités de vente (boîtes, flacons…), avec son lot et sa péremption.
+ * Quantité en unités de comptage (boîtes, flacons…), avec son lot et sa péremption.
  */
 export class CreerProduitAvecStockDto extends CreerProduitDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) stockInitial?: number;
   @Majuscules() @VideEnNull() @IsOptional() @IsString() @MaxLength(60) numeroLot?: string | null;
   @VideEnNull() @IsOptional() @IsDateString() datePeremption?: string | null;
-  /** Prix d'achat d'une unité de vente (FCFA) */
+  /** Prix d'achat d'une unité de comptage (FCFA) */
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) prixAchat?: number;
 }
 

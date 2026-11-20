@@ -30,6 +30,9 @@ export class LigneReceptionDto {
 
   /** Prix d'achat de l'unité saisie (boîte ou plaque) */
   @Type(() => Number) @IsNumber() @Min(0) prixAchatUnitaire: number;
+
+  /** Observation de la ligne (facultative) */
+  @Majuscules() @VideEnNull() @IsOptional() @IsString() @MaxLength(500) observation?: string | null;
 }
 
 export class CreerReceptionDto {
@@ -37,6 +40,12 @@ export class CreerReceptionDto {
 
   /** AAAA-MM-JJ */
   @IsDateString() dateReception: string;
+
+  /** N° de la facture du fournisseur */
+  @Majuscules() @VideEnNull() @IsOptional() @IsString() @MaxLength(50) numFactureFourn?: string | null;
+
+  /** N° du bon de livraison du fournisseur */
+  @Majuscules() @VideEnNull() @IsOptional() @IsString() @MaxLength(50) numBonLivraison?: string | null;
 
   @Majuscules() @VideEnNull() @IsOptional() @IsString() @MaxLength(500) observation?: string | null;
 

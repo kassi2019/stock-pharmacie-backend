@@ -44,7 +44,7 @@ type Options = {
 
 /**
  * Crée le contrôleur d'une liste de référence simple (code + libellé),
- * même fonctionnement que les onglets Formes, Familles, Unités de vente et Fonctions du district :
+ * même fonctionnement que les onglets Formes, Familles, Unités de comptage et Fonctions du district :
  * liste avec nombre d'utilisations, création, modification, suppression si inutilisée.
  */
 export function controleurReferentiel(o: Options): Type<unknown> {

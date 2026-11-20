@@ -106,7 +106,7 @@ export class ProduitsService {
   }
 
   /**
-   * Forme, famille ou unité de vente du produit : identifiant (liste déroulante) ou
+   * Forme, famille ou unité de comptage du produit : identifiant (liste déroulante) ou
    * libellé saisi librement (import), ajouté à la liste s'il est nouveau (§ 6).
    */
   private async resoudre(
@@ -178,7 +178,7 @@ export class ProduitsService {
         data: { ...(data as Prisma.ProduitUncheckedCreateInput), code, ...liens },
       });
       if (avecStock && peremption) {
-        // Stock tenu en plaques : quantité saisie en unités de vente × plaques par unité
+        // Stock tenu en plaques : quantité saisie en unités de comptage × plaques par unité
         const plaquesParBoite = produit.plaquesParBoite || 1;
         const quantitePlaques = stockInitial! * plaquesParBoite;
         const prixPlaque = Math.round(((prixAchat ?? 0) / plaquesParBoite) * 100) / 100;

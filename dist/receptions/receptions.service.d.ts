@@ -22,6 +22,7 @@ export declare class ReceptionsService {
         };
         fournisseur: {
             id: number;
+            code: string;
             nom: string;
         };
         _count: {
@@ -35,6 +36,8 @@ export declare class ReceptionsService {
         montantTotal: Prisma.Decimal;
         numero: string;
         dateReception: Date;
+        numFactureFourn: string | null;
+        numBonLivraison: string | null;
         observation: string | null;
     })[]>;
     trouver(id: number): Promise<{
@@ -57,7 +60,11 @@ export declare class ReceptionsService {
         };
         lignes: ({
             produit: {
+                uniteVente: {
+                    libelle: string;
+                } | null;
                 id: number;
+                code: string;
                 designation: string;
                 plaquesParBoite: number;
             };
@@ -66,6 +73,7 @@ export declare class ReceptionsService {
             produitId: number;
             numeroLot: string;
             datePeremption: Date;
+            observation: string | null;
             montant: Prisma.Decimal;
             receptionId: number;
             lotId: number;
@@ -82,6 +90,8 @@ export declare class ReceptionsService {
         montantTotal: Prisma.Decimal;
         numero: string;
         dateReception: Date;
+        numFactureFourn: string | null;
+        numBonLivraison: string | null;
         observation: string | null;
     }>;
     private controler;
@@ -110,7 +120,11 @@ export declare class ReceptionsService {
             };
             lignes: ({
                 produit: {
+                    uniteVente: {
+                        libelle: string;
+                    } | null;
                     id: number;
+                    code: string;
                     designation: string;
                     plaquesParBoite: number;
                 };
@@ -119,6 +133,7 @@ export declare class ReceptionsService {
                 produitId: number;
                 numeroLot: string;
                 datePeremption: Date;
+                observation: string | null;
                 montant: Prisma.Decimal;
                 receptionId: number;
                 lotId: number;
@@ -135,6 +150,8 @@ export declare class ReceptionsService {
             montantTotal: Prisma.Decimal;
             numero: string;
             dateReception: Date;
+            numFactureFourn: string | null;
+            numBonLivraison: string | null;
             observation: string | null;
         };
         avertissements: string[];

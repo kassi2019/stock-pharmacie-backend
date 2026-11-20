@@ -49,6 +49,14 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], LigneReceptionDto.prototype, "prixAchatUnitaire", void 0);
+__decorate([
+    (0, transformations_1.Majuscules)(),
+    (0, transformations_1.VideEnNull)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(500),
+    __metadata("design:type", Object)
+], LigneReceptionDto.prototype, "observation", void 0);
 class CreerReceptionDto {
 }
 exports.CreerReceptionDto = CreerReceptionDto;
@@ -61,6 +69,22 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreerReceptionDto.prototype, "dateReception", void 0);
+__decorate([
+    (0, transformations_1.Majuscules)(),
+    (0, transformations_1.VideEnNull)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(50),
+    __metadata("design:type", Object)
+], CreerReceptionDto.prototype, "numFactureFourn", void 0);
+__decorate([
+    (0, transformations_1.Majuscules)(),
+    (0, transformations_1.VideEnNull)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(50),
+    __metadata("design:type", Object)
+], CreerReceptionDto.prototype, "numBonLivraison", void 0);
 __decorate([
     (0, transformations_1.Majuscules)(),
     (0, transformations_1.VideEnNull)(),

@@ -133,7 +133,7 @@ model Produit {
   /// Le stock est tenu en plaques (unité de base) ; 1 si vente à l'unité seule
   plaquesParBoite  Int         @default(1)
   consommable      Boolean     @default(false)
-  /// Seuil d'alerte saisi (stock minimum, en unités de vente) ; 0 = calcul sur la couverture
+  /// Seuil d'alerte saisi (stock minimum, en unités de comptage) ; 0 = calcul sur la couverture
   seuilAlerte      Int         @default(0)
   prixVenteBoite   Decimal     @default(0) @db.Decimal(18, 2)
   prixVentePlaque  Decimal     @default(0) @db.Decimal(18, 2)
@@ -191,6 +191,10 @@ model Reception {
   fournisseurId Int
   fournisseur   Fournisseur      @relation(fields: [fournisseurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   dateReception DateTime         @db.Date
+  /// N° de la facture du fournisseur
+  numFactureFourn String?        @db.NVarChar(50)
+  /// N° du bon de livraison du fournisseur
+  numBonLivraison String?        @db.NVarChar(50)
   observation   String?          @db.NVarChar(500)
   montantTotal  Decimal          @default(0) @db.Decimal(18, 2)
   utilisateurId Int
@@ -220,6 +224,8 @@ model ReceptionLigne {
   /// Prix d'achat de l'unité saisie
   prixAchatUnitaire Decimal   @db.Decimal(18, 2)
   montant           Decimal   @db.Decimal(18, 2)
+  /// Observation de la ligne (facultative)
+  observation       String?   @db.NVarChar(500)
 }
 
 // ─── Mouvements de stock ───────────────────────────────────────────────────
@@ -310,7 +316,7 @@ model DispensationLigne {
   dispensation    Dispensation @relation(fields: [dispensationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   produitId       Int
   produit         Produit      @relation(fields: [produitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  /// BOITE (unité de vente) | PLAQUE
+  /// BOITE (unité de comptage) | PLAQUE
   unite           String       @db.NVarChar(10)
   quantite        Int
   /// Quantité sortie du stock, en plaques

@@ -5,10 +5,13 @@ export declare class LigneReceptionDto {
     quantite: number;
     unite: string;
     prixAchatUnitaire: number;
+    observation?: string | null;
 }
 export declare class CreerReceptionDto {
     fournisseurId: number;
     dateReception: string;
+    numFactureFourn?: string | null;
+    numBonLivraison?: string | null;
     observation?: string | null;
     lignes: LigneReceptionDto[];
 }

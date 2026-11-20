@@ -60,7 +60,7 @@ export class EtatStockService {
 
     for (const p of produits) {
       const qs = Math.max(0, consoParProduit.get(p.id) ?? 0) / reglages.periodeConsoJours;
-      // Seuil saisi en unités de vente, stock tenu en plaques
+      // Seuil saisi en unités de comptage, stock tenu en plaques
       const seuil = p.seuilAlerte * (p.plaquesParBoite || 1);
       const etat = calculerEtat(stocks.get(p.id) ?? 0, qs, limites, seuil);
       const qsArrondi = Math.round(qs * 10_000) / 10_000;

@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReceptionsController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const reception_dto_1 = require("./reception.dto");
 const receptions_service_1 = require("./receptions.service");
 let ReceptionsController = class ReceptionsController {
@@ -59,7 +59,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('verifier'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('receptions:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [reception_dto_1.CreerReceptionDto]),
@@ -67,7 +67,7 @@ __decorate([
 ], ReceptionsController.prototype, "verifier", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('receptions:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -76,7 +76,7 @@ __decorate([
 ], ReceptionsController.prototype, "creer", null);
 exports.ReceptionsController = ReceptionsController = __decorate([
     (0, common_1.Controller)('receptions'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('receptions:VOIR'),
     __metadata("design:paramtypes", [receptions_service_1.ReceptionsService])
 ], ReceptionsController);
 //# sourceMappingURL=receptions.controller.js.map

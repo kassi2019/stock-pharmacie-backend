@@ -1,12 +1,11 @@
 import { Controller, Get, Module, Query } from '@nestjs/common';
-import { Roles } from '../auth/decorateurs';
-import { ROLES, ROLES_GESTION_STOCK } from '../common/constantes';
+import { Acces } from '../auth/droits';
 import { SortiesModule } from '../sorties/sorties.module';
 import { RapportsService } from './rapports.service';
 
 /** Rapports et points financiers (§ 5 et § 15) : responsable, administrateur et direction. */
 @Controller('rapports')
-@Roles(...ROLES_GESTION_STOCK, ROLES.DIRECTION)
+@Acces('rapports:VOIR')
 export class RapportsController {
   constructor(private readonly service: RapportsService) {}
 

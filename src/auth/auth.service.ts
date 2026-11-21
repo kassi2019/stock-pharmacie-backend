@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { ROLES, Role } from '../common/constantes';
+import { ROLES } from '../common/constantes';
 import { JournalService } from '../journal/journal.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { UtilisateurConnecte } from './decorateurs';
+import { ContenuJeton, UtilisateurConnecte } from './decorateurs';
+import { lirePermissions } from './droits';
 
 @Injectable()
 export class AuthService {
@@ -25,13 +26,19 @@ export class AuthService {
       data: { derniereConnexion: new Date() },
     });
 
-    const utilisateur: UtilisateurConnecte = {
+    const contenu: ContenuJeton = {
       id: u.id,
       matricule: u.matricule,
       nom: [u.nom, u.prenoms].filter(Boolean).join(' '),
-      role: u.role as Role,
+      role: u.role,
     };
-    return { jeton: await this.jwt.signAsync(utilisateur), utilisateur };
+    const profil = await this.prisma.profil.findUnique({ where: { code: u.role } });
+    const utilisateur: UtilisateurConnecte = {
+      ...contenu,
+      roleLibelle: profil?.libelle ?? u.role,
+      permissions: lirePermissions(u.role, profil?.permissions),
+    };
+    return { jeton: await this.jwt.signAsync(contenu), utilisateur };
   }
 
   /** Changement de son propre mot de passe. */

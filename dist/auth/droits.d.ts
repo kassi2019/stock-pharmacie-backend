@@ -1,0 +1,11 @@
+export declare const DROITS: readonly ["VOIR", "IMPRIMER", "MODIFIER", "VALIDER"];
+export type Droit = (typeof DROITS)[number];
+export declare const MODULES_DROITS: Record<string, readonly Droit[]>;
+export type Permissions = Record<string, Droit[]>;
+export declare const CLE_ACCES = "acces";
+export declare const Acces: (...exigences: string[]) => import("@nestjs/common").CustomDecorator<string>;
+export declare function normaliserDroits(module: string, valeur: unknown): Droit[];
+export declare const TOUS_LES_DROITS: Permissions;
+export declare function lirePermissions(codeProfil: string, texteJson: string | null | undefined): Permissions;
+export declare function aLeDroit(permissions: Permissions | undefined, module: string, droit?: Droit): boolean;
+export declare function satisfait(permissions: Permissions | undefined, exigences: string[]): boolean;

@@ -25,6 +25,7 @@ export declare class ProduitsController {
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -41,7 +42,6 @@ export declare class ProduitsController {
         prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
         consoJournaliere: import("@prisma/client/runtime/library").Decimal;
         etatStock: string;
-        createdAt: Date;
     }>[]>;
     trouver(id: number, u: UtilisateurConnecte): Promise<Partial<{
         lots: {
@@ -53,8 +53,8 @@ export declare class ProduitsController {
             } | null;
             id: number;
             updatedAt: Date;
-            prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
             createdAt: Date;
+            prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
             produitId: number;
             numeroLot: string;
             datePeremption: Date;
@@ -81,6 +81,7 @@ export declare class ProduitsController {
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -97,12 +98,12 @@ export declare class ProduitsController {
         prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
         consoJournaliere: import("@prisma/client/runtime/library").Decimal;
         etatStock: string;
-        createdAt: Date;
     }>>;
     creer(dto: CreerProduitAvecStockDto, u: UtilisateurConnecte): Promise<{
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -119,12 +120,12 @@ export declare class ProduitsController {
         prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
         consoJournaliere: import("@prisma/client/runtime/library").Decimal;
         etatStock: string;
-        createdAt: Date;
     }>;
     modifier(id: number, dto: ModifierProduitDto, u: UtilisateurConnecte): Promise<{
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -141,6 +142,5 @@ export declare class ProduitsController {
         prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
         consoJournaliere: import("@prisma/client/runtime/library").Decimal;
         etatStock: string;
-        createdAt: Date;
     }>;
 }

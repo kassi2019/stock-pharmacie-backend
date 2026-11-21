@@ -72,12 +72,12 @@ export declare class RapportsService {
                 date: Date;
                 id: number;
                 utilisateurId: number;
-                montantTotal: import("@prisma/client/runtime/library").Decimal;
                 numero: string;
+                statut: string;
+                montantTotal: import("@prisma/client/runtime/library").Decimal;
                 patient: string;
                 numeroPassage: string | null;
                 prescripteur: string | null;
-                statut: string;
                 motifAnnulation: string | null;
                 dateAnnulation: Date | null;
                 annuleParId: number | null;
@@ -119,8 +119,8 @@ export declare class RapportsService {
                 id: number;
                 utilisateurId: number;
                 valeur: import("@prisma/client/runtime/library").Decimal;
-                produitId: number;
                 numero: string;
+                produitId: number;
                 lotId: number;
                 quantite: number;
                 motif: string;

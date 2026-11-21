@@ -26,6 +26,10 @@ const sauvegardes_module_1 = require("./sauvegardes/sauvegardes.module");
 const alertes_controller_1 = require("./alertes/alertes.controller");
 const stock_module_1 = require("./stock/stock.module");
 const utilisateurs_controller_1 = require("./utilisateurs/utilisateurs.controller");
+const profils_controller_1 = require("./utilisateurs/profils.controller");
+const personnel_controller_1 = require("./utilisateurs/personnel.controller");
+const utilisateurs_service_1 = require("./utilisateurs/utilisateurs.service");
+const paie_controller_1 = require("./paie/paie.controller");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -47,7 +51,8 @@ exports.AppModule = AppModule = __decorate([
             rapports_module_1.RapportsModule,
             sauvegardes_module_1.SauvegardesModule,
         ],
-        controllers: [app_controller_1.AppController, accueil_controller_1.AccueilController, utilisateurs_controller_1.UtilisateursController, alertes_controller_1.AlertesController],
+        controllers: [app_controller_1.AppController, accueil_controller_1.AccueilController, utilisateurs_controller_1.UtilisateursController, personnel_controller_1.PersonnelController, profils_controller_1.ProfilsController, paie_controller_1.PaieController, alertes_controller_1.AlertesController],
+        providers: [utilisateurs_service_1.UtilisateursService, personnel_controller_1.PersonnelService, paie_controller_1.PaieService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

@@ -12,9 +12,9 @@ import {
   Type,
 } from '@nestjs/common';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
 import { genererCode } from '../common/codes';
-import { ROLES_GESTION_STOCK } from '../common/constantes';
+import { Acces } from '../auth/droits';
 import { Majuscules, VideEnNull } from '../common/transformations';
 import { JournalService } from '../journal/journal.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -34,7 +34,7 @@ type Options = {
   /** Préfixe du code automatique, ex. 'FAM' */
   prefixe: string;
   /** Relation comptée (empêche la suppression si utilisée) */
-  relation: 'produits' | 'utilisateurs';
+  relation: 'produits' | 'personnel';
   /** Nom dans le journal et dans les messages */
   entite: string;
   libelleUtilisation: string;
@@ -68,7 +68,7 @@ export function controleurReferentiel(o: Options): Type<unknown> {
     }
 
     @Post()
-    @Roles(...ROLES_GESTION_STOCK)
+    @Acces('parametres:MODIFIER')
     async creer(@Body() dto: ReferentielDto, @Utilisateur() u: UtilisateurConnecte) {
       if (!dto.libelle) throw new BadRequestException('Le libellé est obligatoire.');
       const code =
@@ -82,7 +82,7 @@ export function controleurReferentiel(o: Options): Type<unknown> {
     }
 
     @Patch(':id')
-    @Roles(...ROLES_GESTION_STOCK)
+    @Acces('parametres:MODIFIER')
     async modifier(
       @Param('id', ParseIntPipe) id: number,
       @Body() dto: ReferentielDto,
@@ -98,7 +98,7 @@ export function controleurReferentiel(o: Options): Type<unknown> {
     }
 
     @Delete(':id')
-    @Roles(...ROLES_GESTION_STOCK)
+    @Acces('parametres:MODIFIER')
     async supprimer(@Param('id', ParseIntPipe) id: number, @Utilisateur() u: UtilisateurConnecte) {
       const element = await this.delegue.findUnique({
         where: { id },
@@ -159,7 +159,7 @@ export const FonctionsController = controleurReferentiel({
   chemin: 'fonctions',
   modele: 'fonction',
   prefixe: 'FCT',
-  relation: 'utilisateurs',
+  relation: 'personnel',
   entite: 'FONCTION',
-  libelleUtilisation: 'utilisateur(s)',
+  libelleUtilisation: 'membre(s) du personnel',
 });

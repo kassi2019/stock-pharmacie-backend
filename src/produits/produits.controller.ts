@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ROLES_GESTION_STOCK } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces } from '../auth/droits';
 import { CreerProduitAvecStockDto, ModifierProduitDto } from './produit.dto';
 import { ProduitsService } from './produits.service';
 
@@ -25,23 +25,23 @@ export class ProduitsController {
         formeId: formeId ? Number(formeId) : undefined,
         familleId: familleId ? Number(familleId) : undefined,
       },
-      u.role,
+      u.permissions,
     );
   }
 
   @Get(':id')
   trouver(@Param('id', ParseIntPipe) id: number, @Utilisateur() u: UtilisateurConnecte) {
-    return this.service.trouver(id, u.role);
+    return this.service.trouver(id, u.permissions);
   }
 
   @Post()
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('produits:MODIFIER')
   creer(@Body() dto: CreerProduitAvecStockDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.creer(dto, u.id);
   }
 
   @Patch(':id')
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('produits:MODIFIER')
   modifier(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ModifierProduitDto,

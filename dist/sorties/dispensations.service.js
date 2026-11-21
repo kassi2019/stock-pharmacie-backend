@@ -110,7 +110,7 @@ let DispensationsService = class DispensationsService {
             const dispensation = await tx.dispensation.create({
                 data: {
                     numero,
-                    patient: dto.patient,
+                    patient: dto.patient ?? '',
                     numeroPassage: dto.numeroPassage ?? null,
                     prescripteur: dto.prescripteur ?? null,
                     montantTotal,
@@ -139,7 +139,7 @@ let DispensationsService = class DispensationsService {
                             quantiteAvant: part.quantiteAvant,
                             quantiteApres: part.quantiteApres,
                             prixUnitaire: part.prixAchatPlaque,
-                            motif: `DISPENSATION ${numero} — ${dto.patient}`,
+                            motif: dto.patient ? `DISPENSATION ${numero} — ${dto.patient}` : `DISPENSATION ${numero}`,
                             documentType: constantes_1.DOCUMENTS.ORDONNANCE,
                             documentId: dispensation.id,
                             utilisateurId,

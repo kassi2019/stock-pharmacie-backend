@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ROLES, ROLES_GESTION_STOCK } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces } from '../auth/droits';
 import { CreerFournisseurDto, ModifierFournisseurDto } from './fournisseur.dto';
 import { FournisseursService } from './fournisseurs.service';
 
@@ -19,7 +19,7 @@ export class FournisseursController {
   }
 
   @Get(':id/historique')
-  @Roles(...ROLES_GESTION_STOCK, ROLES.DIRECTION)
+  @Acces('parametres:VOIR|receptions:VOIR')
   historique(
     @Param('id', ParseIntPipe) id: number,
     @Query('du') du?: string,
@@ -29,14 +29,14 @@ export class FournisseursController {
   }
 
   @Post()
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('parametres:MODIFIER')
   creer(@Body() dto: CreerFournisseurDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.creer(dto, u.id);
   }
 
   /** Modification, y compris désactivation / réactivation ({ actif }). */
   @Patch(':id')
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('parametres:MODIFIER')
   modifier(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ModifierFournisseurDto,

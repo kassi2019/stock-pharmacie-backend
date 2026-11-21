@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccueilController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
+const droits_1 = require("../auth/droits");
 const constantes_1 = require("../common/constantes");
 const dates_1 = require("../common/dates");
 const parametres_service_1 = require("../parametres/parametres.service");
@@ -28,15 +29,62 @@ let AccueilController = class AccueilController {
     }
     async resume(u) {
         const produitsActifs = await this.prisma.produit.count({ where: { actif: true } });
-        if (!constantes_1.ROLES_PRIX_VENTE.includes(u.role)) {
-            return { indicateurs: { produitsActifs }, enAttente: {}, urgences: [] };
-        }
-        const voitAchat = constantes_1.ROLES_PRIX_ACHAT.includes(u.role);
         const jour = (0, dates_1.aujourdhui)();
+        const enAttente = {};
+        const ajouter = (module, alertes) => {
+            const utiles = alertes.filter((a) => a.nombre > 0);
+            if (!utiles.length)
+                return;
+            const niveau = utiles.reduce((n, a) => (GRAVITE[a.niveau] > GRAVITE[n] ? a.niveau : n), 'INFO');
+            enAttente[module] = {
+                nombre: utiles.reduce((s, a) => s + a.nombre, 0),
+                niveau,
+                libelle: utiles.map((a) => `${a.nombre} ${a.texte}`).join(' · '),
+                alertes: utiles,
+            };
+        };
+        const voit = (module) => (0, droits_1.aLeDroit)(u.permissions, module);
+        if (voit('utilisateurs')) {
+            const [sansCompte, comptesInactifs] = await Promise.all([
+                this.prisma.personnel.count({ where: { actif: true, comptes: { none: {} } } }),
+                this.prisma.utilisateur.count({ where: { actif: false, role: { not: 'SYSTEME' }, personnel: { actif: true } } }),
+            ]);
+            ajouter('utilisateurs', [
+                { nombre: sansCompte, texte: 'personne(s) sans compte', niveau: 'INFO' },
+                { nombre: comptesInactifs, texte: 'compte(s) désactivé(s)', niveau: 'ATTENTION' },
+            ]);
+        }
+        if (voit('paie')) {
+            const moisCourant = jour.toISOString().slice(0, 7);
+            const [statuts, sansBulletin] = await Promise.all([
+                this.prisma.bulletinPaie.groupBy({ by: ['statut'], where: { mois: moisCourant }, _count: { _all: true } }),
+                this.prisma.personnel.count({ where: { actif: true, bulletins: { none: { mois: moisCourant } } } }),
+            ]);
+            const n = (s) => statuts.find((x) => x.statut === s)?._count._all ?? 0;
+            ajouter('paie', [
+                { nombre: n('VALIDE'), texte: 'bulletin(s) à payer', niveau: 'ATTENTION' },
+                { nombre: n('BROUILLON'), texte: 'bulletin(s) à valider', niveau: 'ATTENTION' },
+                { nombre: sansBulletin, texte: 'personne(s) sans bulletin ce mois', niveau: 'INFO' },
+            ]);
+        }
+        if (voit('dispensation')) {
+            const [ventes, annulees] = await Promise.all([
+                this.prisma.dispensation.count({ where: { date: { gte: jour }, statut: { not: 'ANNULEE' } } }),
+                this.prisma.dispensation.count({ where: { dateAnnulation: { gte: jour } } }),
+            ]);
+            ajouter('dispensation', [
+                { nombre: annulees, texte: "annulation(s) aujourd'hui", niveau: 'ATTENTION' },
+                { nombre: ventes, texte: "dispensation(s) aujourd'hui", niveau: 'INFO' },
+            ]);
+        }
+        if (!(0, droits_1.aLeDroit)(u.permissions, 'prixVente')) {
+            return { indicateurs: { produitsActifs }, enAttente, urgences: [] };
+        }
+        const voitAchat = (0, droits_1.aLeDroit)(u.permissions, 'prixAchat');
         const { delaiAlertePeremptionJours: delai } = await this.parametres.reglages();
         const limite = (0, dates_1.ajouterJours)(jour, delai);
         const debutMois = new Date(Date.UTC(jour.getUTCFullYear(), jour.getUTCMonth(), 1));
-        const [etats, lots, receptionsMois, produitsBas] = await Promise.all([
+        const [etats, lots, receptionsMois, produitsBas, mouvementsJour] = await Promise.all([
             this.prisma.produit.groupBy({
                 by: ['etatStock'],
                 where: { actif: true },
@@ -65,6 +113,7 @@ let AccueilController = class AccueilController {
                 select: { id: true, designation: true, etatStock: true, consoJournaliere: true },
                 orderBy: [{ etatStock: 'asc' }, { designation: 'asc' }],
             }),
+            this.prisma.mouvement.count({ where: { date: { gte: jour } } }),
         ]);
         const compteEtat = Object.fromEntries(etats.map((e) => [e.etatStock, e._count._all]));
         const ruptures = compteEtat[constantes_1.ETATS_STOCK.RUPTURE] ?? 0;
@@ -83,41 +132,26 @@ let AccueilController = class AccueilController {
                 : Number(p.prixVenteBoite) / Math.max(1, p.plaquesParBoite);
             valeurVente += l.quantiteRestante * prixPlaque;
         }
-        const enAttente = {};
-        const ajouter = (module, alertes) => {
-            const utiles = alertes.filter((a) => a.nombre > 0);
-            if (!utiles.length)
-                return;
-            const niveau = utiles.reduce((n, a) => (GRAVITE[a.niveau] > GRAVITE[n] ? a.niveau : n), 'INFO');
-            enAttente[module] = {
-                nombre: utiles.reduce((s, a) => s + a.nombre, 0),
-                niveau,
-                libelle: utiles.map((a) => `${a.nombre} ${a.texte}`).join(' · '),
-                alertes: utiles,
-            };
-        };
-        ajouter('produits', [
+        ajouter('parametres', [
             { nombre: ruptures, texte: 'en rupture', niveau: 'URGENT' },
             { nombre: sousStock, texte: 'sous stock', niveau: 'ATTENTION' },
         ]);
-        ajouter('peremptions', [
-            { nombre: perimes.length, texte: 'lot(s) périmé(s)', niveau: 'URGENT' },
-            { nombre: proches.length, texte: `lot(s) ≤ ${delai} j`, niveau: 'ATTENTION' },
-        ]);
         ajouter('retraits', [
             { nombre: perimes.length, texte: 'lot(s) périmé(s) à retirer', niveau: 'URGENT' },
-        ]);
-        ajouter('alertes', [
             { nombre: ruptures, texte: 'rupture(s)', niveau: 'URGENT' },
             { nombre: sousStock, texte: 'sous stock', niveau: 'ATTENTION' },
-            { nombre: proches.length, texte: `péremption(s) ≤ ${delai} j`, niveau: 'ATTENTION' },
+            { nombre: proches.length, texte: `lot(s) ≤ ${delai} j`, niveau: 'ATTENTION' },
+        ]);
+        ajouter('inventaires', [
+            { nombre: perimes.length, texte: 'lot(s) périmé(s) en stock', niveau: 'URGENT' },
+            { nombre: mouvementsJour, texte: "mouvement(s) aujourd'hui", niveau: 'INFO' },
         ]);
         ajouter('receptions', [
             { nombre: receptionsMois._count._all, texte: 'réception(s) ce mois', niveau: 'INFO' },
         ]);
         const urgences = [
-            { module: 'produits', nombre: ruptures, texte: 'produit(s) en rupture' },
-            { module: 'peremptions', nombre: perimes.length, texte: 'lot(s) périmé(s) à retirer' },
+            { module: 'parametres', nombre: ruptures, texte: 'produit(s) en rupture' },
+            { module: 'retraits', nombre: perimes.length, texte: 'lot(s) périmé(s) à retirer' },
         ].filter((x) => x.nombre > 0);
         const lot = (l) => ({
             produitId: l.produit.id,

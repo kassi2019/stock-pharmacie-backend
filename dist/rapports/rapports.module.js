@@ -14,8 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RapportsModule = exports.RapportsController = void 0;
 const common_1 = require("@nestjs/common");
-const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const sorties_module_1 = require("../sorties/sorties.module");
 const rapports_service_1 = require("./rapports.service");
 let RapportsController = class RapportsController {
@@ -47,7 +46,7 @@ __decorate([
 ], RapportsController.prototype, "etatStock", null);
 exports.RapportsController = RapportsController = __decorate([
     (0, common_1.Controller)('rapports'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('rapports:VOIR'),
     __metadata("design:paramtypes", [rapports_service_1.RapportsService])
 ], RapportsController);
 let RapportsModule = class RapportsModule {

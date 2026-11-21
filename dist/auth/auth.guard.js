@@ -13,11 +13,14 @@ exports.AuthGuard = void 0;
 const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
 const jwt_1 = require("@nestjs/jwt");
+const prisma_service_1 = require("../prisma/prisma.service");
 const decorateurs_1 = require("./decorateurs");
+const droits_1 = require("./droits");
 let AuthGuard = class AuthGuard {
-    constructor(jwt, reflector) {
+    constructor(jwt, reflector, prisma) {
         this.jwt = jwt;
         this.reflector = reflector;
+        this.prisma = prisma;
     }
     async canActivate(ctx) {
         const cibles = [ctx.getHandler(), ctx.getClass()];
@@ -27,15 +30,36 @@ let AuthGuard = class AuthGuard {
         const [type, jeton] = (req.headers.authorization ?? '').split(' ');
         if (type !== 'Bearer' || !jeton)
             throw new common_1.UnauthorizedException('Connexion requise.');
+        let contenu;
         try {
-            req.utilisateur = await this.jwt.verifyAsync(jeton);
+            contenu = await this.jwt.verifyAsync(jeton);
         }
         catch {
             throw new common_1.UnauthorizedException('Session expirée, veuillez vous reconnecter.');
         }
+        const compte = await this.prisma.utilisateur.findUnique({
+            where: { id: contenu.id },
+            select: { actif: true, role: true },
+        });
+        if (!compte?.actif)
+            throw new common_1.UnauthorizedException('Compte désactivé, veuillez vous reconnecter.');
+        const profil = await this.prisma.profil.findUnique({ where: { code: compte.role } });
+        const utilisateur = {
+            id: contenu.id,
+            matricule: contenu.matricule,
+            nom: contenu.nom,
+            role: compte.role,
+            roleLibelle: profil?.libelle ?? compte.role,
+            permissions: (0, droits_1.lirePermissions)(compte.role, profil?.permissions),
+        };
+        req.utilisateur = utilisateur;
         const roles = this.reflector.getAllAndOverride(decorateurs_1.CLE_ROLES, cibles);
-        if (roles?.length && !roles.includes(req.utilisateur.role)) {
+        if (roles?.length && !roles.includes(utilisateur.role)) {
             throw new common_1.ForbiddenException("Vous n'avez pas les droits pour cette action.");
+        }
+        const exigences = this.reflector.getAllAndOverride(droits_1.CLE_ACCES, cibles);
+        if (exigences?.length && !(0, droits_1.satisfait)(utilisateur.permissions, exigences)) {
+            throw new common_1.ForbiddenException("Votre profil n'a pas les droits pour cette action.");
         }
         return true;
     }
@@ -44,6 +68,7 @@ exports.AuthGuard = AuthGuard;
 exports.AuthGuard = AuthGuard = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [jwt_1.JwtService,
-        core_1.Reflector])
+        core_1.Reflector,
+        prisma_service_1.PrismaService])
 ], AuthGuard);
 //# sourceMappingURL=auth.guard.js.map

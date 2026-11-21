@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsInt, IsNotEmpty, IsNumber, IsString, MaxLength, Min } from 'class-validator';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ROLES, ROLES_GESTION_STOCK } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces } from '../auth/droits';
 import { Majuscules } from '../common/transformations';
 import { PrixService } from './prix.service';
 
@@ -19,30 +19,31 @@ class CorrectionDto extends MontantsDto {
   @Majuscules() @IsString() @IsNotEmpty({ message: 'Le motif est obligatoire.' }) @MaxLength(255) motif: string;
 }
 
-/** Onglet « Prix » du Paramétrage : montants visibles par la pharmacie, le gestionnaire et la direction. */
+/** Onglet « Prix » du module Produits : historiques selon les droits « prix de vente » / « prix d'achat ». */
 @Controller('prix')
-@Roles(...ROLES_GESTION_STOCK, ROLES.AGENT, ROLES.DIRECTION)
 export class PrixController {
   constructor(private readonly service: PrixService) {}
 
   @Get('vente')
+  @Acces('produits:VOIR', 'prixVente:VOIR')
   historiqueVente(@Query('produitId', ParseIntPipe) produitId: number) {
     return this.service.historiqueVente(produitId);
   }
 
   @Get('achat')
+  @Acces('produits:VOIR', 'prixAchat:VOIR')
   historiqueAchat(@Query('produitId', ParseIntPipe) produitId: number) {
     return this.service.historiqueAchat(produitId);
   }
 
   @Post('vente')
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('produits:MODIFIER')
   nouveau(@Body() dto: NouveauPrixDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.nouveauPrixVente(dto.produitId, dto.prixBoite, dto.prixPlaque, u.id);
   }
 
   @Patch('vente/:id/corriger')
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('produits:MODIFIER')
   corriger(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CorrectionDto,

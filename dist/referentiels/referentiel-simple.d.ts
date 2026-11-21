@@ -8,7 +8,7 @@ type Options = {
     chemin: string;
     modele: 'forme' | 'famille' | 'uniteVente' | 'fonction';
     prefixe: string;
-    relation: 'produits' | 'utilisateurs';
+    relation: 'produits' | 'personnel';
     entite: string;
     libelleUtilisation: string;
     avecCategorie?: boolean;

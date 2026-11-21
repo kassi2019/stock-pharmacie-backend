@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Role } from '../common/constantes';
+import { Permissions } from '../auth/droits';
 import { JournalService } from '../journal/journal.service';
 import { ParametresService } from '../parametres/parametres.service';
 import { PrixService } from '../prix/prix.service';
@@ -21,7 +21,7 @@ export declare class ProduitsService {
     private readonly prix;
     constructor(prisma: PrismaService, journal: JournalService, etats: EtatStockService, parametres: ParametresService, prix: PrixService);
     private masquer;
-    lister(filtres: FiltresProduits, role: Role): Promise<Partial<{
+    lister(filtres: FiltresProduits, droits: Permissions): Promise<Partial<{
         stockDisponible: number;
         forme: {
             id: number;
@@ -42,6 +42,7 @@ export declare class ProduitsService {
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -58,9 +59,8 @@ export declare class ProduitsService {
         prixAchatPlaque: Prisma.Decimal;
         consoJournaliere: Prisma.Decimal;
         etatStock: string;
-        createdAt: Date;
     }>[]>;
-    trouver(id: number, role: Role): Promise<Partial<{
+    trouver(id: number, droits: Permissions): Promise<Partial<{
         lots: {
             perime: boolean;
             prochePeremption: boolean;
@@ -70,8 +70,8 @@ export declare class ProduitsService {
             } | null;
             id: number;
             updatedAt: Date;
-            prixAchatPlaque: Prisma.Decimal;
             createdAt: Date;
+            prixAchatPlaque: Prisma.Decimal;
             produitId: number;
             numeroLot: string;
             datePeremption: Date;
@@ -98,6 +98,7 @@ export declare class ProduitsService {
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -114,7 +115,6 @@ export declare class ProduitsService {
         prixAchatPlaque: Prisma.Decimal;
         consoJournaliere: Prisma.Decimal;
         etatStock: string;
-        createdAt: Date;
     }>>;
     private resoudre;
     private liens;
@@ -123,6 +123,7 @@ export declare class ProduitsService {
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -139,12 +140,12 @@ export declare class ProduitsService {
         prixAchatPlaque: Prisma.Decimal;
         consoJournaliere: Prisma.Decimal;
         etatStock: string;
-        createdAt: Date;
     }>;
     modifier(id: number, dto: ModifierProduitDto, utilisateurId: number): Promise<{
         id: number;
         updatedAt: Date;
         actif: boolean;
+        createdAt: Date;
         code: string;
         designation: string;
         dosage: string | null;
@@ -161,6 +162,5 @@ export declare class ProduitsService {
         prixAchatPlaque: Prisma.Decimal;
         consoJournaliere: Prisma.Decimal;
         etatStock: string;
-        createdAt: Date;
     }>;
 }

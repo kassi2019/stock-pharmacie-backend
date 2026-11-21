@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FournisseursController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const fournisseur_dto_1 = require("./fournisseur.dto");
 const fournisseurs_service_1 = require("./fournisseurs.service");
 let FournisseursController = class FournisseursController {
@@ -54,7 +54,7 @@ __decorate([
 ], FournisseursController.prototype, "trouver", null);
 __decorate([
     (0, common_1.Get)(':id/historique'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('parametres:VOIR|receptions:VOIR'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Query)('du')),
     __param(2, (0, common_1.Query)('au')),
@@ -64,7 +64,7 @@ __decorate([
 ], FournisseursController.prototype, "historique", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('parametres:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -73,7 +73,7 @@ __decorate([
 ], FournisseursController.prototype, "creer", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('parametres:MODIFIER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),

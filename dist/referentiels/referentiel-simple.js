@@ -18,7 +18,7 @@ const common_1 = require("@nestjs/common");
 const class_validator_1 = require("class-validator");
 const decorateurs_1 = require("../auth/decorateurs");
 const codes_1 = require("../common/codes");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const transformations_1 = require("../common/transformations");
 const journal_service_1 = require("../journal/journal.service");
 const prisma_service_1 = require("../prisma/prisma.service");
@@ -116,7 +116,7 @@ function controleurReferentiel(o) {
     ], ReferentielController.prototype, "lister", null);
     __decorate([
         (0, common_1.Post)(),
-        (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+        (0, droits_1.Acces)('parametres:MODIFIER'),
         __param(0, (0, common_1.Body)()),
         __param(1, (0, decorateurs_1.Utilisateur)()),
         __metadata("design:type", Function),
@@ -125,7 +125,7 @@ function controleurReferentiel(o) {
     ], ReferentielController.prototype, "creer", null);
     __decorate([
         (0, common_1.Patch)(':id'),
-        (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+        (0, droits_1.Acces)('parametres:MODIFIER'),
         __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
         __param(1, (0, common_1.Body)()),
         __param(2, (0, decorateurs_1.Utilisateur)()),
@@ -135,7 +135,7 @@ function controleurReferentiel(o) {
     ], ReferentielController.prototype, "modifier", null);
     __decorate([
         (0, common_1.Delete)(':id'),
-        (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+        (0, droits_1.Acces)('parametres:MODIFIER'),
         __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
         __param(1, (0, decorateurs_1.Utilisateur)()),
         __metadata("design:type", Function),
@@ -178,8 +178,8 @@ exports.FonctionsController = controleurReferentiel({
     chemin: 'fonctions',
     modele: 'fonction',
     prefixe: 'FCT',
-    relation: 'utilisateurs',
+    relation: 'personnel',
     entite: 'FONCTION',
-    libelleUtilisation: 'utilisateur(s)',
+    libelleUtilisation: 'membre(s) du personnel',
 });
 //# sourceMappingURL=referentiel-simple.js.map

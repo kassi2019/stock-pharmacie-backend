@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProduitsController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const produit_dto_1 = require("./produit.dto");
 const produits_service_1 = require("./produits.service");
 let ProduitsController = class ProduitsController {
@@ -29,10 +29,10 @@ let ProduitsController = class ProduitsController {
             actif: actif === undefined || actif === '' ? undefined : actif === 'true',
             formeId: formeId ? Number(formeId) : undefined,
             familleId: familleId ? Number(familleId) : undefined,
-        }, u.role);
+        }, u.permissions);
     }
     trouver(id, u) {
-        return this.service.trouver(id, u.role);
+        return this.service.trouver(id, u.permissions);
     }
     creer(dto, u) {
         return this.service.creer(dto, u.id);
@@ -64,7 +64,7 @@ __decorate([
 ], ProduitsController.prototype, "trouver", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('produits:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -73,7 +73,7 @@ __decorate([
 ], ProduitsController.prototype, "creer", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('produits:MODIFIER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),

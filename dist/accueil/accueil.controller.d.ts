@@ -18,7 +18,12 @@ export declare class AccueilController {
             alertes?: undefined;
             receptions?: undefined;
         };
-        enAttente: {};
+        enAttente: Record<string, {
+            nombre: number;
+            niveau: Niveau;
+            libelle: string;
+            alertes: Alerte[];
+        }>;
         urgences: never[];
         etats?: undefined;
         exemples?: undefined;

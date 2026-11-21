@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MouvementsController = exports.PeremptionsController = exports.RetraitsController = exports.DispensationsController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const dispensations_service_1 = require("./dispensations.service");
 const mouvements_service_1 = require("./mouvements.service");
 const retraits_service_1 = require("./retraits.service");
@@ -58,7 +58,7 @@ __decorate([
 ], DispensationsController.prototype, "trouver", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT),
+    (0, droits_1.Acces)('dispensation:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -68,7 +68,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/annuler'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('dispensation:VALIDER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),
@@ -78,7 +78,7 @@ __decorate([
 ], DispensationsController.prototype, "annuler", null);
 exports.DispensationsController = DispensationsController = __decorate([
     (0, common_1.Controller)('dispensations'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT, constantes_1.ROLES.CAISSIER, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('dispensation:VOIR'),
     __metadata("design:paramtypes", [dispensations_service_1.DispensationsService])
 ], DispensationsController);
 let RetraitsController = class RetraitsController {
@@ -127,7 +127,7 @@ __decorate([
 ], RetraitsController.prototype, "lots", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('retraits:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -137,7 +137,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('perimes'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('retraits:MODIFIER'),
     __param(0, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -145,7 +145,7 @@ __decorate([
 ], RetraitsController.prototype, "retirerPerimes", null);
 exports.RetraitsController = RetraitsController = __decorate([
     (0, common_1.Controller)('retraits'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('retraits:VOIR'),
     __metadata("design:paramtypes", [retraits_service_1.RetraitsService])
 ], RetraitsController);
 let PeremptionsController = class PeremptionsController {
@@ -154,7 +154,7 @@ let PeremptionsController = class PeremptionsController {
     }
     async lister(jours, u) {
         const resultat = await this.service.peremptions(jours ? Number(jours) : undefined);
-        if (!constantes_1.ROLES_PRIX_ACHAT.includes(u.role)) {
+        if (!(0, droits_1.aLeDroit)(u.permissions, 'prixAchat')) {
             resultat.lots = resultat.lots.map(({ valeur, prixAchatPlaque, ...l }) => l);
         }
         return resultat;
@@ -171,7 +171,7 @@ __decorate([
 ], PeremptionsController.prototype, "lister", null);
 exports.PeremptionsController = PeremptionsController = __decorate([
     (0, common_1.Controller)('peremptions'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_PRIX_ACHAT, constantes_1.ROLES.CAISSIER),
+    (0, droits_1.Acces)('retraits:VOIR'),
     __metadata("design:paramtypes", [retraits_service_1.RetraitsService])
 ], PeremptionsController);
 let MouvementsController = class MouvementsController {
@@ -202,7 +202,7 @@ __decorate([
 ], MouvementsController.prototype, "lister", null);
 exports.MouvementsController = MouvementsController = __decorate([
     (0, common_1.Controller)('mouvements'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_PRIX_ACHAT),
+    (0, droits_1.Acces)('inventaires:VOIR'),
     __metadata("design:paramtypes", [mouvements_service_1.MouvementsService])
 ], MouvementsController);
 //# sourceMappingURL=sorties.controller.js.map

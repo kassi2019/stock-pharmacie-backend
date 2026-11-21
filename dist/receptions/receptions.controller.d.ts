@@ -12,8 +12,8 @@ export declare class ReceptionsController {
         };
         fournisseur: {
             id: number;
-            code: string;
             nom: string;
+            code: string;
         };
         _count: {
             lignes: number;
@@ -22,13 +22,13 @@ export declare class ReceptionsController {
         id: number;
         utilisateurId: number;
         createdAt: Date;
+        numero: string;
+        observation: string | null;
         fournisseurId: number;
         montantTotal: import("@prisma/client/runtime/library").Decimal;
-        numero: string;
         dateReception: Date;
         numFactureFourn: string | null;
         numBonLivraison: string | null;
-        observation: string | null;
     })[]>;
     trouver(id: number): Promise<{
         utilisateur: {
@@ -40,11 +40,11 @@ export declare class ReceptionsController {
             id: number;
             updatedAt: Date;
             actif: boolean;
-            code: string;
-            createdAt: Date;
             nom: string;
             telephone: string | null;
             email: string | null;
+            createdAt: Date;
+            code: string;
             contact: string | null;
             adresse: string | null;
         };
@@ -60,10 +60,10 @@ export declare class ReceptionsController {
             };
         } & {
             id: number;
+            observation: string | null;
             produitId: number;
             numeroLot: string;
             datePeremption: Date;
-            observation: string | null;
             montant: import("@prisma/client/runtime/library").Decimal;
             receptionId: number;
             lotId: number;
@@ -76,13 +76,13 @@ export declare class ReceptionsController {
         id: number;
         utilisateurId: number;
         createdAt: Date;
+        numero: string;
+        observation: string | null;
         fournisseurId: number;
         montantTotal: import("@prisma/client/runtime/library").Decimal;
-        numero: string;
         dateReception: Date;
         numFactureFourn: string | null;
         numBonLivraison: string | null;
-        observation: string | null;
     }>;
     verifier(dto: CreerReceptionDto): Promise<{
         erreurs: string[];
@@ -99,11 +99,11 @@ export declare class ReceptionsController {
                 id: number;
                 updatedAt: Date;
                 actif: boolean;
-                code: string;
-                createdAt: Date;
                 nom: string;
                 telephone: string | null;
                 email: string | null;
+                createdAt: Date;
+                code: string;
                 contact: string | null;
                 adresse: string | null;
             };
@@ -119,10 +119,10 @@ export declare class ReceptionsController {
                 };
             } & {
                 id: number;
+                observation: string | null;
                 produitId: number;
                 numeroLot: string;
                 datePeremption: Date;
-                observation: string | null;
                 montant: import("@prisma/client/runtime/library").Decimal;
                 receptionId: number;
                 lotId: number;
@@ -135,13 +135,13 @@ export declare class ReceptionsController {
             id: number;
             utilisateurId: number;
             createdAt: Date;
+            numero: string;
+            observation: string | null;
             fournisseurId: number;
             montantTotal: import("@prisma/client/runtime/library").Decimal;
-            numero: string;
             dateReception: Date;
             numFactureFourn: string | null;
             numBonLivraison: string | null;
-            observation: string | null;
         };
         avertissements: string[];
     }>;

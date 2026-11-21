@@ -1,57 +1,33 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import { PartialType, OmitType } from '@nestjs/mapped-types';
-import * as bcrypt from 'bcryptjs';
+/**
+ * ROUTES DES COMPTES UTILISATEURS (module Utilisateurs)
+ *   GET   /api/utilisateurs                    liste des comptes       (droit VOIR)
+ *   GET   /api/utilisateurs/profils            profils (listes)        (droit VOIR)
+ *   POST  /api/utilisateurs                    compte pour une personne existante (droit MODIFIER)
+ *   PATCH /api/utilisateurs/:id                profil, activation      (droit MODIFIER)
+ *   PATCH /api/utilisateurs/:id/mot-de-passe   réinitialisation        (droit MODIFIER)
+ * Le personnel : personnel.controller.ts ; les profils et droits : profils.controller.ts.
+ * (Changer SON mot de passe : PATCH /api/auth/mot-de-passe.)
+ */
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEmail,
-  IsIn,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ROLES } from '../common/constantes';
-import { Majuscules, VideEnNull } from '../common/transformations';
-import { JournalService } from '../journal/journal.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces } from '../auth/droits';
+import { MESSAGE_MDP, REGLE_MDP, UtilisateursService } from './utilisateurs.service';
 
-/** Rôles attribuables (SYSTÈME est réservé aux tâches automatiques). */
-const ROLES_ATTRIBUABLES = Object.values(ROLES).filter((r) => r !== ROLES.SYSTEME);
-
-const REGLE_MDP = /(?=.*[A-Za-z])(?=.*\d)/;
-const MESSAGE_MDP = 'Le mot de passe doit contenir au moins 8 caractères, dont une lettre et un chiffre.';
-
-class CreerUtilisateurDto {
-  @Majuscules() @IsString() @IsNotEmpty() @MaxLength(30) matricule: string;
-  @Majuscules() @IsString() @IsNotEmpty() @MaxLength(100) nom: string;
-  @Majuscules() @VideEnNull() @IsOptional() @IsString() @MaxLength(150) prenoms?: string | null;
-  @VideEnNull() @IsOptional() @IsString() @MaxLength(50) telephone?: string | null;
-  @VideEnNull() @IsOptional() @IsEmail({}, { message: 'Adresse e-mail invalide.' }) email?: string | null;
-  @IsIn(ROLES_ATTRIBUABLES, { message: 'Rôle inconnu.' }) role: string;
-  /** Fonction du personnel (onglet Fonctions du Paramétrage) */
-  @IsOptional() @Type(() => Number) @IsInt() fonctionId?: number | null;
+/** Profil et mot de passe d'un nouveau compte (identifiant = matricule de la personne). */
+export class CompteDto {
+  @IsString() @IsNotEmpty({ message: 'Le profil est obligatoire.' }) role: string;
   @IsString() @MinLength(8, { message: MESSAGE_MDP }) @Matches(REGLE_MDP, { message: MESSAGE_MDP })
   motDePasse: string;
 }
 
-class ModifierUtilisateurDto extends PartialType(
-  OmitType(CreerUtilisateurDto, ['matricule', 'motDePasse'] as const),
-) {
+class CreerCompteDto extends CompteDto {
+  @Type(() => Number) @IsInt({ message: 'Choisissez le membre du personnel.' }) personnelId: number;
+}
+
+class ModifierCompteDto {
+  @IsOptional() @IsString() @IsNotEmpty() role?: string;
   @IsOptional() @IsBoolean() actif?: boolean;
 }
 
@@ -60,100 +36,37 @@ class ReinitialiserDto {
   motDePasse: string;
 }
 
-const CHAMPS_PUBLICS = {
-  id: true,
-  matricule: true,
-  nom: true,
-  prenoms: true,
-  telephone: true,
-  email: true,
-  role: true,
-  actif: true,
-  derniereConnexion: true,
-  createdAt: true,
-  fonctionId: true,
-  fonction: { select: { id: true, libelle: true } },
-} as const;
-
-/** Comptes utilisateurs (§ 5) — onglet du Paramétrage, réservé à l'administrateur. */
 @Controller('utilisateurs')
-@Roles(ROLES.ADMIN)
+@Acces('utilisateurs:VOIR')
 export class UtilisateursController {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly journal: JournalService,
-  ) {}
+  constructor(private readonly service: UtilisateursService) {}
 
   @Get()
   lister() {
-    return this.prisma.utilisateur.findMany({
-      where: { role: { not: ROLES.SYSTEME } },
-      select: CHAMPS_PUBLICS,
-      orderBy: [{ nom: 'asc' }, { prenoms: 'asc' }],
-    });
+    return this.service.lister();
+  }
+
+  @Get('profils')
+  profils() {
+    return this.service.profils();
   }
 
   @Post()
-  async creer(@Body() dto: CreerUtilisateurDto, @Utilisateur() u: UtilisateurConnecte) {
-    const { motDePasse, ...donnees } = dto;
-    const cree = await this.prisma.utilisateur.create({
-      data: { ...donnees, motDePasse: await bcrypt.hash(motDePasse, 10) },
-      select: CHAMPS_PUBLICS,
-    });
-    await this.journal.enregistrer(u.id, 'CREATION', 'UTILISATEUR', cree.id, donnees);
-    return cree;
+  @Acces('utilisateurs:MODIFIER')
+  creer(@Body() dto: CreerCompteDto, @Utilisateur() u: UtilisateurConnecte) {
+    const { personnelId, ...compte } = dto;
+    return this.service.creer(personnelId, compte, u);
   }
 
   @Patch(':id')
-  async modifier(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ModifierUtilisateurDto,
-    @Utilisateur() u: UtilisateurConnecte,
-  ) {
-    const avant = await this.trouver(id);
-    if (id === u.id && dto.actif === false) {
-      throw new BadRequestException('Vous ne pouvez pas désactiver votre propre compte.');
-    }
-    const perdAdmin =
-      avant.role === ROLES.ADMIN &&
-      avant.actif &&
-      (dto.actif === false || (dto.role !== undefined && dto.role !== ROLES.ADMIN));
-    if (perdAdmin) {
-      const autresAdmins = await this.prisma.utilisateur.count({
-        where: { role: ROLES.ADMIN, actif: true, id: { not: id } },
-      });
-      if (!autresAdmins) {
-        throw new BadRequestException('Il doit toujours rester au moins un administrateur actif.');
-      }
-    }
-    const { nom, ...reste } = dto;
-    const modifie = await this.prisma.utilisateur.update({
-      where: { id },
-      data: { ...reste, ...(nom ? { nom } : {}) },
-      select: CHAMPS_PUBLICS,
-    });
-    await this.journal.enregistrer(u.id, 'MODIFICATION', 'UTILISATEUR', id, { avant, apres: dto });
-    return modifie;
+  @Acces('utilisateurs:MODIFIER')
+  modifier(@Param('id', ParseIntPipe) id: number, @Body() dto: ModifierCompteDto, @Utilisateur() u: UtilisateurConnecte) {
+    return this.service.modifier(id, dto, u);
   }
 
   @Patch(':id/mot-de-passe')
-  async reinitialiser(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ReinitialiserDto,
-    @Utilisateur() u: UtilisateurConnecte,
-  ) {
-    await this.trouver(id);
-    await this.prisma.utilisateur.update({
-      where: { id },
-      data: { motDePasse: await bcrypt.hash(dto.motDePasse, 10) },
-    });
-    await this.journal.enregistrer(u.id, 'REINITIALISATION', 'MOT_DE_PASSE', id);
-    return { message: 'Mot de passe réinitialisé.' };
-  }
-
-  private async trouver(id: number) {
-    const existant = await this.prisma.utilisateur.findUnique({ where: { id }, select: CHAMPS_PUBLICS });
-    if (!existant || existant.role === ROLES.SYSTEME) throw new NotFoundException('Utilisateur introuvable.');
-    return existant;
+  @Acces('utilisateurs:MODIFIER')
+  reinitialiser(@Param('id', ParseIntPipe) id: number, @Body() dto: ReinitialiserDto, @Utilisateur() u: UtilisateurConnecte) {
+    return this.service.reinitialiser(id, dto.motDePasse, u);
   }
 }

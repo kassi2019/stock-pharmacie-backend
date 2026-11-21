@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlertesController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
+const droits_1 = require("../auth/droits");
 const constantes_1 = require("../common/constantes");
 const dates_1 = require("../common/dates");
 const journal_service_1 = require("../journal/journal.service");
@@ -43,7 +44,7 @@ let AlertesController = class AlertesController {
         return { delai, stockBas, peremption, perimes, actualisationSecondes: actualisation };
     }
     async detail(u) {
-        const voitAchat = constantes_1.ROLES_PRIX_ACHAT.includes(u.role);
+        const voitAchat = (0, droits_1.aLeDroit)(u.permissions, 'prixAchat');
         const reglages = await this.parametres.reglages();
         const jour = (0, dates_1.aujourdhui)();
         const [produits, stocks, lots, lotsEnStock] = await Promise.all([
@@ -139,7 +140,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('recalculer'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('retraits:MODIFIER'),
     __param(0, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -147,7 +148,7 @@ __decorate([
 ], AlertesController.prototype, "recalculer", null);
 exports.AlertesController = AlertesController = __decorate([
     (0, common_1.Controller)('alertes'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_PRIX_VENTE),
+    (0, droits_1.Acces)('retraits:VOIR', 'prixVente:VOIR'),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         parametres_service_1.ParametresService,
         etat_stock_service_1.EtatStockService,

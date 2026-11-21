@@ -1,11 +1,11 @@
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ROLES, ROLES_GESTION_STOCK } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces } from '../auth/droits';
 import { CreerReceptionDto } from './reception.dto';
 import { ReceptionsService } from './receptions.service';
 
 @Controller('receptions')
-@Roles(...ROLES_GESTION_STOCK, ROLES.DIRECTION)
+@Acces('receptions:VOIR')
 export class ReceptionsController {
   constructor(private readonly service: ReceptionsService) {}
 
@@ -29,13 +29,13 @@ export class ReceptionsController {
 
   @Post('verifier')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('receptions:MODIFIER')
   verifier(@Body() dto: CreerReceptionDto) {
     return this.service.verifier(dto);
   }
 
   @Post()
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('receptions:MODIFIER')
   creer(@Body() dto: CreerReceptionDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.creer(dto, u.id);
   }

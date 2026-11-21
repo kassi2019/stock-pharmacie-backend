@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { Role, ROLES, ROLES_GESTION_STOCK, ROLES_PRIX_ACHAT } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces, aLeDroit } from '../auth/droits';
 import { DispensationsService } from './dispensations.service';
 import { MouvementsService } from './mouvements.service';
 import { RetraitsService } from './retraits.service';
@@ -8,9 +8,9 @@ import { CreerDispensationDto, CreerRetraitDto, MotifDto } from './sorties.dto';
 
 const nombre = (v?: string) => (v ? Number(v) : undefined);
 
-/** Dispensation (§ 10.1) : l'agent délivre ; le responsable annule ; caisse et direction consultent. */
+/** Dispensation (§ 10.1) : MODIFIER = délivrer ; VALIDER = annuler ; VOIR = consulter. */
 @Controller('dispensations')
-@Roles(...ROLES_GESTION_STOCK, ROLES.AGENT, ROLES.CAISSIER, ROLES.DIRECTION)
+@Acces('dispensation:VOIR')
 export class DispensationsController {
   constructor(private readonly service: DispensationsService) {}
 
@@ -30,14 +30,14 @@ export class DispensationsController {
   }
 
   @Post()
-  @Roles(...ROLES_GESTION_STOCK, ROLES.AGENT)
+  @Acces('dispensation:MODIFIER')
   creer(@Body() dto: CreerDispensationDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.creer(dto, u.id);
   }
 
   @Post(':id/annuler')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('dispensation:VALIDER')
   annuler(@Param('id', ParseIntPipe) id: number, @Body() dto: MotifDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.annuler(id, dto.motif, u.id);
   }
@@ -45,7 +45,7 @@ export class DispensationsController {
 
 /** Retraits de lots (§ 10.2) et retrait des périmés (§ 11). */
 @Controller('retraits')
-@Roles(...ROLES_GESTION_STOCK, ROLES.AGENT, ROLES.DIRECTION)
+@Acces('retraits:VOIR')
 export class RetraitsController {
   constructor(private readonly service: RetraitsService) {}
 
@@ -70,7 +70,7 @@ export class RetraitsController {
   }
 
   @Post()
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('retraits:MODIFIER')
   creer(@Body() dto: CreerRetraitDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.creer(dto, u.id);
   }
@@ -78,22 +78,22 @@ export class RetraitsController {
   /** Retrait immédiat de tous les lots périmés (sans attendre la tâche de nuit). */
   @Post('perimes')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('retraits:MODIFIER')
   retirerPerimes(@Utilisateur() u: UtilisateurConnecte) {
     return this.service.retirerPerimes(u.id);
   }
 }
 
-/** Lots proches de la péremption (§ 11) : tous sauf le médecin ; valeur réservée au prix d'achat. */
+/** Lots proches de la péremption (§ 11) ; valeur réservée au droit « prix d'achat ». */
 @Controller('peremptions')
-@Roles(...ROLES_PRIX_ACHAT, ROLES.CAISSIER)
+@Acces('retraits:VOIR')
 export class PeremptionsController {
   constructor(private readonly service: RetraitsService) {}
 
   @Get()
   async lister(@Query('jours') jours: string | undefined, @Utilisateur() u: UtilisateurConnecte) {
     const resultat = await this.service.peremptions(jours ? Number(jours) : undefined);
-    if (!ROLES_PRIX_ACHAT.includes(u.role as Role)) {
+    if (!aLeDroit(u.permissions, 'prixAchat')) {
       resultat.lots = resultat.lots.map(({ valeur, prixAchatPlaque, ...l }) => l) as typeof resultat.lots;
     }
     return resultat;
@@ -102,7 +102,7 @@ export class PeremptionsController {
 
 /** Mouvements et traçabilité (§ 14). */
 @Controller('mouvements')
-@Roles(...ROLES_PRIX_ACHAT)
+@Acces('inventaires:VOIR')
 export class MouvementsController {
   constructor(private readonly service: MouvementsService) {}
 

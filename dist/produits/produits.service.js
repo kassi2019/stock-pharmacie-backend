@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProduitsService = void 0;
 const common_1 = require("@nestjs/common");
+const droits_1 = require("../auth/droits");
 const constantes_1 = require("../common/constantes");
 const dates_1 = require("../common/dates");
 const codes_1 = require("../common/codes");
@@ -27,9 +28,9 @@ let ProduitsService = class ProduitsService {
         this.parametres = parametres;
         this.prix = prix;
     }
-    masquer(p, role) {
+    masquer(p, droits) {
         const copie = { ...p };
-        if (!constantes_1.ROLES_PRIX_VENTE.includes(role)) {
+        if (!(0, droits_1.aLeDroit)(droits, 'prixVente')) {
             for (const cle of [
                 'prixVenteBoite',
                 'prixVentePlaque',
@@ -42,13 +43,13 @@ let ProduitsService = class ProduitsService {
                 delete copie[cle];
             }
         }
-        else if (!constantes_1.ROLES_PRIX_ACHAT.includes(role)) {
+        else if (!(0, droits_1.aLeDroit)(droits, 'prixAchat')) {
             delete copie.prixAchatPlaque;
             copie.lots = copie.lots?.map(({ prixAchatPlaque, ...l }) => l);
         }
         return copie;
     }
-    async lister(filtres, role) {
+    async lister(filtres, droits) {
         const where = {};
         if (filtres.recherche) {
             where.OR = [
@@ -70,9 +71,9 @@ let ProduitsService = class ProduitsService {
             orderBy: { designation: 'asc' },
         });
         const stocks = await this.etats.stocksDisponibles(produits.map((p) => p.id));
-        return produits.map((p) => this.masquer({ ...p, stockDisponible: stocks.get(p.id) ?? 0 }, role));
+        return produits.map((p) => this.masquer({ ...p, stockDisponible: stocks.get(p.id) ?? 0 }, droits));
     }
-    async trouver(id, role) {
+    async trouver(id, droits) {
         const p = await this.prisma.produit.findUnique({
             where: { id },
             include: {
@@ -99,7 +100,7 @@ let ProduitsService = class ProduitsService {
         const stockDisponible = lots
             .filter((l) => !l.perime)
             .reduce((s, l) => s + l.quantiteRestante, 0);
-        return this.masquer({ ...p, lots, stockDisponible }, role);
+        return this.masquer({ ...p, lots, stockDisponible }, droits);
     }
     async resoudre(modele, prefixe, id, libelle) {
         if (id !== undefined)

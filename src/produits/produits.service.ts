@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { DOCUMENTS, Role, ROLES_PRIX_ACHAT, ROLES_PRIX_VENTE, TYPES_MOUVEMENT } from '../common/constantes';
+import { aLeDroit, Permissions } from '../auth/droits';
+import { DOCUMENTS, TYPES_MOUVEMENT } from '../common/constantes';
 import { ajouterJours, aujourdhui, versDate } from '../common/dates';
 import { genererCode } from '../common/codes';
 import { JournalService } from '../journal/journal.service';
@@ -28,10 +29,10 @@ export class ProduitsService {
     private readonly prix: PrixService,
   ) {}
 
-  /** Montants et quantités masqués selon le rôle (§ 6 et § 16). */
-  private masquer<T extends Record<string, any>>(p: T, role: Role): Partial<T> {
+  /** Montants et quantités masqués selon les droits du profil (§ 6 et § 16). */
+  private masquer<T extends Record<string, any>>(p: T, droits: Permissions): Partial<T> {
     const copie: Record<string, any> = { ...p };
-    if (!ROLES_PRIX_VENTE.includes(role)) {
+    if (!aLeDroit(droits, 'prixVente')) {
       for (const cle of [
         'prixVenteBoite',
         'prixVentePlaque',
@@ -43,14 +44,14 @@ export class ProduitsService {
       ]) {
         delete copie[cle];
       }
-    } else if (!ROLES_PRIX_ACHAT.includes(role)) {
+    } else if (!aLeDroit(droits, 'prixAchat')) {
       delete copie.prixAchatPlaque;
       copie.lots = copie.lots?.map(({ prixAchatPlaque, ...l }: any) => l);
     }
     return copie as Partial<T>;
   }
 
-  async lister(filtres: FiltresProduits, role: Role) {
+  async lister(filtres: FiltresProduits, droits: Permissions) {
     const where: Prisma.ProduitWhereInput = {};
     if (filtres.recherche) {
       where.OR = [
@@ -70,12 +71,12 @@ export class ProduitsService {
     });
     const stocks = await this.etats.stocksDisponibles(produits.map((p) => p.id));
     return produits.map((p) =>
-      this.masquer({ ...p, stockDisponible: stocks.get(p.id) ?? 0 }, role),
+      this.masquer({ ...p, stockDisponible: stocks.get(p.id) ?? 0 }, droits),
     );
   }
 
   /** Fiche produit avec ses lots triés par date de péremption (§ 11). */
-  async trouver(id: number, role: Role) {
+  async trouver(id: number, droits: Permissions) {
     const p = await this.prisma.produit.findUnique({
       where: { id },
       include: {
@@ -102,7 +103,7 @@ export class ProduitsService {
     const stockDisponible = lots
       .filter((l) => !l.perime)
       .reduce((s, l) => s + l.quantiteRestante, 0);
-    return this.masquer({ ...p, lots, stockDisponible }, role);
+    return this.masquer({ ...p, lots, stockDisponible }, droits);
   }
 
   /**

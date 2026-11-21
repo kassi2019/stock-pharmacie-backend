@@ -47,8 +47,8 @@ export declare class RetraitsService {
         id: number;
         utilisateurId: number;
         valeur: Prisma.Decimal;
-        produitId: number;
         numero: string;
+        produitId: number;
         lotId: number;
         quantite: number;
         motif: string;
@@ -73,8 +73,8 @@ export declare class RetraitsService {
     } & {
         id: number;
         updatedAt: Date;
-        prixAchatPlaque: Prisma.Decimal;
         createdAt: Date;
+        prixAchatPlaque: Prisma.Decimal;
         produitId: number;
         numeroLot: string;
         datePeremption: Date;
@@ -87,8 +87,8 @@ export declare class RetraitsService {
         id: number;
         utilisateurId: number;
         valeur: Prisma.Decimal;
-        produitId: number;
         numero: string;
+        produitId: number;
         lotId: number;
         quantite: number;
         motif: string;
@@ -121,8 +121,8 @@ export declare class RetraitsService {
             };
             id: number;
             updatedAt: Date;
-            prixAchatPlaque: Prisma.Decimal;
             createdAt: Date;
+            prixAchatPlaque: Prisma.Decimal;
             produitId: number;
             numeroLot: string;
             datePeremption: Date;

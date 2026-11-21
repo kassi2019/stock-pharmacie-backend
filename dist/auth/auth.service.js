@@ -16,6 +16,7 @@ const bcrypt = require("bcryptjs");
 const constantes_1 = require("../common/constantes");
 const journal_service_1 = require("../journal/journal.service");
 const prisma_service_1 = require("../prisma/prisma.service");
+const droits_1 = require("./droits");
 let AuthService = class AuthService {
     constructor(prisma, jwt, journal) {
         this.prisma = prisma;
@@ -31,13 +32,19 @@ let AuthService = class AuthService {
             where: { id: u.id },
             data: { derniereConnexion: new Date() },
         });
-        const utilisateur = {
+        const contenu = {
             id: u.id,
             matricule: u.matricule,
             nom: [u.nom, u.prenoms].filter(Boolean).join(' '),
             role: u.role,
         };
-        return { jeton: await this.jwt.signAsync(utilisateur), utilisateur };
+        const profil = await this.prisma.profil.findUnique({ where: { code: u.role } });
+        const utilisateur = {
+            ...contenu,
+            roleLibelle: profil?.libelle ?? u.role,
+            permissions: (0, droits_1.lirePermissions)(u.role, profil?.permissions),
+        };
+        return { jeton: await this.jwt.signAsync(contenu), utilisateur };
     }
     async changerMotDePasse(utilisateurId, ancien, nouveau) {
         const u = await this.prisma.utilisateur.findUnique({ where: { id: utilisateurId } });

@@ -1,5 +1,5 @@
 /**
- * Données initiales : administrateur, utilisateur SYSTÈME (tâches automatiques)
+ * Données initiales : administrateur (fiche du personnel + compte), utilisateur SYSTÈME (tâches automatiques)
  * et formes / catégories de base. Peut être relancé sans risque.
  */
 import { PrismaClient } from '@prisma/client';
@@ -18,6 +18,12 @@ async function main() {
   const motDePasse = process.env.SEED_ADMIN_MOT_DE_PASSE;
   if (!motDePasse) throw new Error('SEED_ADMIN_MOT_DE_PASSE manquant dans .env');
 
+  // Fiche du personnel de l'administrateur (module Utilisateurs) puis son compte
+  const personnel = await prisma.personnel.upsert({
+    where: { matricule },
+    update: {},
+    create: { matricule, nom: 'ADMINISTRATEUR' },
+  });
   await prisma.utilisateur.upsert({
     where: { matricule },
     update: {},
@@ -25,6 +31,7 @@ async function main() {
       matricule,
       nom: 'ADMINISTRATEUR',
       role: 'ADMIN',
+      personnelId: personnel.id,
       motDePasse: await bcrypt.hash(motDePasse, 10),
     },
   });

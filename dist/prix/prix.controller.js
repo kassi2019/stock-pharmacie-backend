@@ -17,7 +17,7 @@ const common_1 = require("@nestjs/common");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const transformations_1 = require("../common/transformations");
 const prix_service_1 = require("./prix.service");
 class MontantsDto {
@@ -70,6 +70,7 @@ let PrixController = class PrixController {
 exports.PrixController = PrixController;
 __decorate([
     (0, common_1.Get)('vente'),
+    (0, droits_1.Acces)('produits:VOIR', 'prixVente:VOIR'),
     __param(0, (0, common_1.Query)('produitId', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -77,6 +78,7 @@ __decorate([
 ], PrixController.prototype, "historiqueVente", null);
 __decorate([
     (0, common_1.Get)('achat'),
+    (0, droits_1.Acces)('produits:VOIR', 'prixAchat:VOIR'),
     __param(0, (0, common_1.Query)('produitId', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -84,7 +86,7 @@ __decorate([
 ], PrixController.prototype, "historiqueAchat", null);
 __decorate([
     (0, common_1.Post)('vente'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('produits:MODIFIER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -93,7 +95,7 @@ __decorate([
 ], PrixController.prototype, "nouveau", null);
 __decorate([
     (0, common_1.Patch)('vente/:id/corriger'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('produits:MODIFIER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),
@@ -103,7 +105,6 @@ __decorate([
 ], PrixController.prototype, "corriger", null);
 exports.PrixController = PrixController = __decorate([
     (0, common_1.Controller)('prix'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT, constantes_1.ROLES.DIRECTION),
     __metadata("design:paramtypes", [prix_service_1.PrixService])
 ], PrixController);
 //# sourceMappingURL=prix.controller.js.map

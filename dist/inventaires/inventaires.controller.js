@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComptageController = exports.InventairesController = void 0;
 const common_1 = require("@nestjs/common");
 const decorateurs_1 = require("../auth/decorateurs");
-const constantes_1 = require("../common/constantes");
+const droits_1 = require("../auth/droits");
 const sorties_dto_1 = require("../sorties/sorties.dto");
 const inventaires_dto_1 = require("./inventaires.dto");
 const inventaires_service_1 = require("./inventaires.service");
@@ -69,7 +69,7 @@ __decorate([
 ], InventairesController.prototype, "trouver", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('inventaires:VALIDER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -78,7 +78,7 @@ __decorate([
 ], InventairesController.prototype, "ouvrir", null);
 __decorate([
     (0, common_1.Patch)(':id/comptage'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT),
+    (0, droits_1.Acces)('inventaires:MODIFIER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),
@@ -88,7 +88,7 @@ __decorate([
 ], InventairesController.prototype, "compter", null);
 __decorate([
     (0, common_1.Post)(':id/lots'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT),
+    (0, droits_1.Acces)('inventaires:MODIFIER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),
@@ -98,7 +98,7 @@ __decorate([
 ], InventairesController.prototype, "ajouterLot", null);
 __decorate([
     (0, common_1.Delete)(':id/lignes/:ligneId'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT),
+    (0, droits_1.Acces)('inventaires:MODIFIER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Param)('ligneId', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
@@ -108,7 +108,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/valider'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('inventaires:VALIDER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -118,7 +118,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/annuler'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('inventaires:VALIDER'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, decorateurs_1.Utilisateur)()),
@@ -128,7 +128,7 @@ __decorate([
 ], InventairesController.prototype, "annuler", null);
 exports.InventairesController = InventairesController = __decorate([
     (0, common_1.Controller)('inventaires'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('inventaires:VOIR'),
     __metadata("design:paramtypes", [inventaires_service_1.InventairesService])
 ], InventairesController);
 let ComptageController = class ComptageController {
@@ -166,7 +166,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('comptage'),
     (0, common_1.HttpCode)(200),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('inventaires:VALIDER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -175,7 +175,7 @@ __decorate([
 ], ComptageController.prototype, "valider", null);
 __decorate([
     (0, common_1.Post)('lots'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK),
+    (0, droits_1.Acces)('inventaires:VALIDER'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, decorateurs_1.Utilisateur)()),
     __metadata("design:type", Function),
@@ -184,7 +184,7 @@ __decorate([
 ], ComptageController.prototype, "ajouterLot", null);
 exports.ComptageController = ComptageController = __decorate([
     (0, common_1.Controller)('inventaire'),
-    (0, decorateurs_1.Roles)(...constantes_1.ROLES_GESTION_STOCK, constantes_1.ROLES.AGENT, constantes_1.ROLES.DIRECTION),
+    (0, droits_1.Acces)('inventaires:VOIR'),
     __metadata("design:paramtypes", [comptage_service_1.ComptageService])
 ], ComptageController);
 //# sourceMappingURL=inventaires.controller.js.map

@@ -17,6 +17,10 @@ import { SauvegardesModule } from './sauvegardes/sauvegardes.module';
 import { AlertesController } from './alertes/alertes.controller';
 import { StockModule } from './stock/stock.module';
 import { UtilisateursController } from './utilisateurs/utilisateurs.controller';
+import { ProfilsController } from './utilisateurs/profils.controller';
+import { PersonnelController, PersonnelService } from './utilisateurs/personnel.controller';
+import { UtilisateursService } from './utilisateurs/utilisateurs.service';
+import { PaieController, PaieService } from './paie/paie.controller';
 
 @Module({
   imports: [
@@ -35,6 +39,7 @@ import { UtilisateursController } from './utilisateurs/utilisateurs.controller';
     RapportsModule,
     SauvegardesModule,
   ],
-  controllers: [AppController, AccueilController, UtilisateursController, AlertesController],
+  controllers: [AppController, AccueilController, UtilisateursController, PersonnelController, ProfilsController, PaieController, AlertesController],
+  providers: [UtilisateursService, PersonnelService, PaieService],
 })
 export class AppModule {}

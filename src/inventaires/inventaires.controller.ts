@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ROLES, ROLES_GESTION_STOCK } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces } from '../auth/droits';
 import { MotifDto } from '../sorties/sorties.dto';
 import { EnregistrerComptageDto, LotTrouveDto, OuvrirInventaireDto } from './inventaires.dto';
 import { InventairesService } from './inventaires.service';
@@ -8,11 +8,11 @@ import { AjoutLotDto, ValiderComptageDto } from './comptage.dto';
 import { ComptageService } from './comptage.service';
 
 /**
- * Inventaires (§ 5 et § 12) : le responsable ouvre, valide ou annule ;
- * l'agent compte (sans valider) ; la direction consulte.
+ * Inventaires (§ 5 et § 12) : droit VALIDER pour ouvrir, valider ou annuler ;
+ * droit MODIFIER pour compter (sans valider) ; droit VOIR pour consulter.
  */
 @Controller('inventaires')
-@Roles(...ROLES_GESTION_STOCK, ROLES.AGENT, ROLES.DIRECTION)
+@Acces('inventaires:VOIR')
 export class InventairesController {
   constructor(private readonly service: InventairesService) {}
 
@@ -27,39 +27,39 @@ export class InventairesController {
   }
 
   @Post()
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('inventaires:VALIDER')
   ouvrir(@Body() dto: OuvrirInventaireDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.ouvrir(dto, u.id);
   }
 
   @Patch(':id/comptage')
-  @Roles(...ROLES_GESTION_STOCK, ROLES.AGENT)
+  @Acces('inventaires:MODIFIER')
   compter(@Param('id', ParseIntPipe) id: number, @Body() dto: EnregistrerComptageDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.compter(id, dto, u.id);
   }
 
   @Post(':id/lots')
-  @Roles(...ROLES_GESTION_STOCK, ROLES.AGENT)
+  @Acces('inventaires:MODIFIER')
   ajouterLot(@Param('id', ParseIntPipe) id: number, @Body() dto: LotTrouveDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.ajouterLot(id, dto, u.id);
   }
 
   @Delete(':id/lignes/:ligneId')
-  @Roles(...ROLES_GESTION_STOCK, ROLES.AGENT)
+  @Acces('inventaires:MODIFIER')
   supprimerLigne(@Param('id', ParseIntPipe) id: number, @Param('ligneId', ParseIntPipe) ligneId: number) {
     return this.service.supprimerLigne(id, ligneId);
   }
 
   @Post(':id/valider')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('inventaires:VALIDER')
   valider(@Param('id', ParseIntPipe) id: number, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.valider(id, u.id);
   }
 
   @Post(':id/annuler')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('inventaires:VALIDER')
   annuler(@Param('id', ParseIntPipe) id: number, @Body() dto: MotifDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.annuler(id, dto.motif, u.id);
   }
@@ -68,10 +68,10 @@ export class InventairesController {
 /**
  * Inventaire par lot « au fil de l'eau » (présentation du district) :
  * GET stock, POST comptage (valider des lots), POST lots (ajouter un lot), GET fiche.
- * Le responsable valide ; la direction et l'agent consultent.
+ * Droit VALIDER pour valider les lots comptés ou ajouter un lot ; droit VOIR pour consulter.
  */
 @Controller('inventaire')
-@Roles(...ROLES_GESTION_STOCK, ROLES.AGENT, ROLES.DIRECTION)
+@Acces('inventaires:VOIR')
 export class ComptageController {
   constructor(private readonly service: ComptageService) {}
 
@@ -87,13 +87,13 @@ export class ComptageController {
 
   @Post('comptage')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('inventaires:VALIDER')
   valider(@Body() dto: ValiderComptageDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.valider(dto, u.id);
   }
 
   @Post('lots')
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('inventaires:VALIDER')
   ajouterLot(@Body() dto: AjoutLotDto, @Utilisateur() u: UtilisateurConnecte) {
     return this.service.ajouterLot(dto, u.id);
   }

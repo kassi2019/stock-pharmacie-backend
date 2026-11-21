@@ -37,10 +37,11 @@ class CreerDispensationDto {
 exports.CreerDispensationDto = CreerDispensationDto;
 __decorate([
     (0, transformations_1.Majuscules)(),
+    (0, transformations_1.VideEnNull)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Le nom du patient est obligatoire.' }),
     (0, class_validator_1.MaxLength)(150),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], CreerDispensationDto.prototype, "patient", void 0);
 __decorate([
     (0, transformations_1.Majuscules)(),

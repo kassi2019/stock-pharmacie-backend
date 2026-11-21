@@ -1,9 +1,15 @@
 import { Role } from '../common/constantes';
-export type UtilisateurConnecte = {
+import { Permissions } from './droits';
+export type ContenuJeton = {
     id: number;
     matricule: string;
     nom: string;
-    role: Role;
+    role: string;
+};
+export type UtilisateurConnecte = ContenuJeton & {
+    role: string;
+    roleLibelle: string;
+    permissions: Permissions;
 };
 export declare const CLE_PUBLIC = "public";
 export declare const Public: () => import("@nestjs/common").CustomDecorator<string>;

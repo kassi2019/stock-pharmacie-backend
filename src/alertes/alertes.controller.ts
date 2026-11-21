@@ -1,6 +1,7 @@
 import { Controller, Get, HttpCode, Post } from '@nestjs/common';
-import { Roles, Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
-import { ETATS_STOCK, Role, ROLES_GESTION_STOCK, ROLES_PRIX_ACHAT, ROLES_PRIX_VENTE } from '../common/constantes';
+import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
+import { Acces, aLeDroit } from '../auth/droits';
+import { ETATS_STOCK } from '../common/constantes';
 import { ajouterJours, aujourdhui } from '../common/dates';
 import { JournalService } from '../journal/journal.service';
 import { ParametresService } from '../parametres/parametres.service';
@@ -11,7 +12,7 @@ const arrondi2 = (n: number) => Math.round(n * 100) / 100;
 const STOCK_BAS: string[] = [ETATS_STOCK.RUPTURE, ETATS_STOCK.SOUS_STOCK];
 
 /**
- * Seuils et alertes (§ 13) — tous les rôles sauf le médecin (pas de quantités).
+ * Seuils et alertes (§ 13) — droit VOIR sur le module Alertes, lots et retraits et sur les quantités (prix de vente).
  *  - GET /alertes/en-tete : compteurs des alertes permanentes (« Péremption ≤ N j »,
  *    « Stock bas » = rupture + sous stock), affichés en haut de chaque écran ;
  *  - GET /alertes : détail par produit (SD, Qs, couverture, seuil, état) et lots proches
@@ -19,7 +20,7 @@ const STOCK_BAS: string[] = [ETATS_STOCK.RUPTURE, ETATS_STOCK.SOUS_STOCK];
  *  - POST /alertes/recalculer : recalcul immédiat (sinon chaque nuit et à chaque mouvement).
  */
 @Controller('alertes')
-@Roles(...ROLES_PRIX_VENTE)
+@Acces('retraits:VOIR', 'prixVente:VOIR')
 export class AlertesController {
   constructor(
     private readonly prisma: PrismaService,
@@ -44,7 +45,7 @@ export class AlertesController {
 
   @Get()
   async detail(@Utilisateur() u: UtilisateurConnecte) {
-    const voitAchat = ROLES_PRIX_ACHAT.includes(u.role as Role);
+    const voitAchat = aLeDroit(u.permissions, 'prixAchat');
     const reglages = await this.parametres.reglages();
     const jour = aujourdhui();
 
@@ -125,7 +126,7 @@ export class AlertesController {
 
   @Post('recalculer')
   @HttpCode(200)
-  @Roles(...ROLES_GESTION_STOCK)
+  @Acces('retraits:MODIFIER')
   async recalculer(@Utilisateur() u: UtilisateurConnecte) {
     await this.etats.recalculer();
     await this.journal.enregistrer(u.id, 'RECALCUL', 'ETATS_STOCK', null, {});

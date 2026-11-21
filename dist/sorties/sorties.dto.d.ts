@@ -4,7 +4,7 @@ export declare class LigneDispensationDto {
     quantite: number;
 }
 export declare class CreerDispensationDto {
-    patient: string;
+    patient?: string | null;
     numeroPassage?: string | null;
     prescripteur?: string | null;
     lignes: LigneDispensationDto[];

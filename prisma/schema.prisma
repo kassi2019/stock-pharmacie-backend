@@ -14,20 +14,24 @@ datasource db {
 // ─── Utilisateurs et journal (communs à l'application) ─────────────────────
 
 model Utilisateur {
-  id                Int       @id @default(autoincrement())
-  matricule         String    @unique @db.NVarChar(30)
-  nom               String    @db.NVarChar(100)
-  prenoms           String?   @db.NVarChar(150)
-  telephone         String?   @db.NVarChar(50)
-  email             String?   @db.NVarChar(150)
+  id                Int        @id @default(autoincrement())
+  matricule         String     @unique @db.NVarChar(30)
+  nom               String     @db.NVarChar(100)
+  prenoms           String?    @db.NVarChar(150)
+  telephone         String?    @db.NVarChar(50)
+  email             String?    @db.NVarChar(150)
   derniereConnexion DateTime?
   fonctionId        Int?
-  fonction          Fonction? @relation(fields: [fonctionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  motDePasse        String    @db.NVarChar(100)
-  /// ADMIN | RESPONSABLE | AGENT | CAISSIER | MEDECIN | DIRECTION | SYSTEME
-  role              String    @db.NVarChar(20)
-  actif             Boolean   @default(true)
-  createdAt         DateTime  @default(now())
+  fonction          Fonction?  @relation(fields: [fonctionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  motDePasse        String     @db.NVarChar(100)
+  /// Code du profil (table Profil) : ADMIN, RESPONSABLE… ; SYSTEME = tâches automatiques
+  role              String     @db.NVarChar(20)
+  actif             Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  /// Fiche du personnel titulaire du compte (identifiant = son matricule ;
+  /// nom, fonction et contacts recopiés depuis la fiche)
+  personnelId       Int?
+  personnel         Personnel? @relation(fields: [personnelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   receptions Reception[]
   mouvements Mouvement[]
@@ -40,6 +44,84 @@ model Utilisateur {
   inventairesOuverts    Inventaire[]      @relation("InventaireOuverture")
   inventairesValides    Inventaire[]      @relation("InventaireValidation")
   lignesComptees        InventaireLigne[]
+}
+
+/// Personnel de la pharmacie (module Utilisateurs). Un compte de connexion est
+/// facultatif (au plus un, identifiant = matricule). Jamais supprimé : désactivé.
+model Personnel {
+  id           Int       @id @default(autoincrement())
+  /// Unique ; sert d'identifiant de connexion si la personne a un compte
+  matricule    String    @unique @db.NVarChar(30)
+  nom          String    @db.NVarChar(100)
+  prenoms      String?   @db.NVarChar(150)
+  fonctionId   Int?
+  fonction     Fonction? @relation(fields: [fonctionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  telephone    String?   @db.NVarChar(50)
+  email        String?   @db.NVarChar(150)
+  /// Photo d'identité « data:image/jpeg;base64,... » (256 px)
+  photo        String?   @db.NVarChar(Max)
+  dateEmbauche DateTime? @db.Date
+  /// Salaire de base mensuel (module Gestion de la paie)
+  salaireBase  Decimal   @default(0) @db.Decimal(18, 2)
+  actif        Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  comptes   Utilisateur[]
+  bulletins BulletinPaie[]
+}
+
+/// Bulletin de paie d'un membre du personnel pour un mois (module Gestion de la paie).
+/// BROUILLON (modifiable) -> VALIDE -> PAYE.
+model BulletinPaie {
+  id            Int             @id @default(autoincrement())
+  /// PAIE-2026-11-0001
+  numero        String          @unique @db.NVarChar(30)
+  personnelId   Int
+  personnel     Personnel       @relation(fields: [personnelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// Mois de paie : AAAA-MM
+  mois          String          @db.NVarChar(7)
+  salaireBase   Decimal         @default(0) @db.Decimal(18, 2)
+  totalPrimes   Decimal         @default(0) @db.Decimal(18, 2)
+  totalRetenues Decimal         @default(0) @db.Decimal(18, 2)
+  netAPayer     Decimal         @default(0) @db.Decimal(18, 2)
+  /// BROUILLON | VALIDE | PAYE
+  statut        String          @default("BROUILLON") @db.NVarChar(15)
+  datePaiement  DateTime?       @db.Date
+  /// ESPECES | VIREMENT | MOBILE_MONEY | CHEQUE
+  modePaiement  String?         @db.NVarChar(20)
+  observation   String?         @db.NVarChar(255)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  lignes        LigneBulletin[]
+
+  @@unique([personnelId, mois])
+  @@index([mois])
+}
+
+/// Prime ou retenue d'un bulletin de paie.
+model LigneBulletin {
+  id         Int          @id @default(autoincrement())
+  bulletinId Int
+  bulletin   BulletinPaie @relation(fields: [bulletinId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  /// PRIME | RETENUE
+  type       String       @db.NVarChar(10)
+  libelle    String       @db.NVarChar(100)
+  montant    Decimal      @db.Decimal(18, 2)
+  ordre      Int          @default(0)
+}
+
+/// Profils (rôles) et leurs droits par module, gérés par l'administrateur
+/// (Paramétrage > Profils & droits). Voir src/auth/droits.ts.
+model Profil {
+  id          Int      @id @default(autoincrement())
+  /// MAJUSCULES, chiffres et _ (ex. PHARMACIEN) ; repris dans Utilisateur.role
+  code        String   @unique @db.NVarChar(20)
+  libelle     String   @db.NVarChar(100)
+  description String?  @db.NVarChar(255)
+  /// Droits en JSON : {"produits":["VOIR","IMPRIMER","MODIFIER"],"prixVente":["VOIR"]}
+  permissions String?  @db.NVarChar(Max)
+  createdAt   DateTime @default(now())
 }
 
 model JournalAction {
@@ -91,6 +173,7 @@ model Fonction {
   code         String        @unique @db.NVarChar(30)
   libelle      String        @unique @db.NVarChar(100)
   utilisateurs Utilisateur[]
+  personnel    Personnel[]
 }
 
 model Fournisseur {
@@ -185,22 +268,22 @@ model Lot {
 }
 
 model Reception {
-  id            Int              @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   /// REC-AAAA-00001
-  numero        String           @unique @db.NVarChar(30)
-  fournisseurId Int
-  fournisseur   Fournisseur      @relation(fields: [fournisseurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  dateReception DateTime         @db.Date
+  numero          String           @unique @db.NVarChar(30)
+  fournisseurId   Int
+  fournisseur     Fournisseur      @relation(fields: [fournisseurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dateReception   DateTime         @db.Date
   /// N° de la facture du fournisseur
-  numFactureFourn String?        @db.NVarChar(50)
+  numFactureFourn String?          @db.NVarChar(50)
   /// N° du bon de livraison du fournisseur
-  numBonLivraison String?        @db.NVarChar(50)
-  observation   String?          @db.NVarChar(500)
-  montantTotal  Decimal          @default(0) @db.Decimal(18, 2)
-  utilisateurId Int
-  utilisateur   Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt     DateTime         @default(now())
-  lignes        ReceptionLigne[]
+  numBonLivraison String?          @db.NVarChar(50)
+  observation     String?          @db.NVarChar(500)
+  montantTotal    Decimal          @default(0) @db.Decimal(18, 2)
+  utilisateurId   Int
+  utilisateur     Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt       DateTime         @default(now())
+  lignes          ReceptionLigne[]
 
   @@index([dateReception])
 }

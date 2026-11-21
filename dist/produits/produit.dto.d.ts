@@ -1,3 +1,7 @@
+export declare class CodeBarreDto {
+    code: string;
+    unite?: 'BOITE' | 'PLAQUE';
+}
 export declare class CreerProduitDto {
     code?: string | null;
     designation: string;
@@ -22,6 +26,7 @@ export declare class CreerProduitAvecStockDto extends CreerProduitDto {
     numeroLot?: string | null;
     datePeremption?: string | null;
     prixAchat?: number;
+    codesBarres?: CodeBarreDto[];
 }
 declare const ModifierProduitDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreerProduitDto>>;
 export declare class ModifierProduitDto extends ModifierProduitDto_base {

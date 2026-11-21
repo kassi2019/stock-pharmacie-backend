@@ -1,7 +1,12 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
+  IsIn,
+  Matches,
+  ValidateNested,
   IsDateString,
   IsInt,
   IsNotEmpty,
@@ -12,6 +17,17 @@ import {
   Min,
 } from 'class-validator';
 import { Majuscules, VideEnNull } from '../common/transformations';
+
+/** Code-barres : espaces retirés, MAJUSCULES (EAN-13, EAN-8, Code 128…). */
+export class CodeBarreDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/\s+/g, '').toUpperCase() : value))
+  @IsString()
+  @Matches(/^[0-9A-Z.\-_/+]{4,50}$/, { message: 'Code-barres invalide (4 à 50 chiffres ou lettres, sans espace).' })
+  code: string;
+
+  /** Ce que représente un scan : une BOITE (par défaut) ou une PLAQUE */
+  @IsOptional() @IsIn(['BOITE', 'PLAQUE'], { message: 'Unité du code-barres inconnue.' }) unite?: 'BOITE' | 'PLAQUE';
+}
 
 export class CreerProduitDto {
   /** Facultatif : MED-0001 si vide */
@@ -63,6 +79,10 @@ export class CreerProduitAvecStockDto extends CreerProduitDto {
   @VideEnNull() @IsOptional() @IsDateString() datePeremption?: string | null;
   /** Prix d'achat d'une unité de comptage (FCFA) */
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) prixAchat?: number;
+
+  /** Codes-barres enregistrés avec le médicament (ex. scannés avant la création) */
+  @IsOptional() @IsArray() @ArrayMaxSize(20) @ValidateNested({ each: true }) @Type(() => CodeBarreDto)
+  codesBarres?: CodeBarreDto[];
 }
 
 export class ModifierProduitDto extends PartialType(CreerProduitDto) {}

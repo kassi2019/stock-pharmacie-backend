@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const referentiel_simple_1 = require("../referentiels/referentiel-simple");
 const produits_controller_1 = require("./produits.controller");
 const produits_service_1 = require("./produits.service");
+const scan_distant_controller_1 = require("./scan-distant.controller");
 let ProduitsModule = class ProduitsModule {
 };
 exports.ProduitsModule = ProduitsModule;
@@ -22,8 +23,9 @@ exports.ProduitsModule = ProduitsModule = __decorate([
             referentiel_simple_1.FamillesController,
             referentiel_simple_1.UnitesVenteController,
             referentiel_simple_1.FonctionsController,
+            scan_distant_controller_1.ScanDistantController,
         ],
-        providers: [produits_service_1.ProduitsService],
+        providers: [produits_service_1.ProduitsService, scan_distant_controller_1.ScanDistantService],
     })
 ], ProduitsModule);
 //# sourceMappingURL=produits.module.js.map

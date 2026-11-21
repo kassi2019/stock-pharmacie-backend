@@ -1,5 +1,5 @@
 import { UtilisateurConnecte } from '../auth/decorateurs';
-import { CreerProduitAvecStockDto, ModifierProduitDto } from './produit.dto';
+import { CodeBarreDto, CreerProduitAvecStockDto, ModifierProduitDto } from './produit.dto';
 import { ProduitsService } from './produits.service';
 export declare class ProduitsController {
     private readonly service;
@@ -22,6 +22,11 @@ export declare class ProduitsController {
             code: string;
             libelle: string;
         } | null;
+        codesBarres: {
+            id: number;
+            code: string;
+            unite: string;
+        }[];
         id: number;
         updatedAt: Date;
         actif: boolean;
@@ -43,6 +48,81 @@ export declare class ProduitsController {
         consoJournaliere: import("@prisma/client/runtime/library").Decimal;
         etatStock: string;
     }>[]>;
+    parCodeBarre(code: string, u: UtilisateurConnecte): Promise<{
+        code: string;
+        unite: string;
+        produit: Partial<{
+            lots: {
+                perime: boolean;
+                prochePeremption: boolean;
+                fournisseur: {
+                    id: number;
+                    nom: string;
+                } | null;
+                id: number;
+                updatedAt: Date;
+                createdAt: Date;
+                prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
+                produitId: number;
+                numeroLot: string;
+                datePeremption: Date;
+                fournisseurId: number | null;
+                quantiteRestante: number;
+            }[];
+            stockDisponible: number;
+            forme: {
+                id: number;
+                code: string;
+                libelle: string;
+            } | null;
+            famille: {
+                id: number;
+                code: string;
+                libelle: string;
+                categorie: string | null;
+            } | null;
+            uniteVente: {
+                id: number;
+                code: string;
+                libelle: string;
+            } | null;
+            codesBarres: {
+                id: number;
+                code: string;
+                unite: string;
+            }[];
+            id: number;
+            updatedAt: Date;
+            actif: boolean;
+            createdAt: Date;
+            code: string;
+            designation: string;
+            dosage: string | null;
+            formeId: number | null;
+            familleId: number | null;
+            uniteVenteId: number | null;
+            venteBoite: boolean;
+            ventePlaque: boolean;
+            plaquesParBoite: number;
+            consommable: boolean;
+            seuilAlerte: number;
+            prixVenteBoite: import("@prisma/client/runtime/library").Decimal;
+            prixVentePlaque: import("@prisma/client/runtime/library").Decimal;
+            prixAchatPlaque: import("@prisma/client/runtime/library").Decimal;
+            consoJournaliere: import("@prisma/client/runtime/library").Decimal;
+            etatStock: string;
+        }>;
+    }>;
+    ajouterCodeBarre(id: number, dto: CodeBarreDto, u: UtilisateurConnecte): Promise<{
+        id: number;
+        createdAt: Date;
+        code: string;
+        produitId: number;
+        unite: string;
+    }>;
+    retirerCodeBarre(id: number, codeId: number, u: UtilisateurConnecte): Promise<{
+        message: string;
+    }>;
     trouver(id: number, u: UtilisateurConnecte): Promise<Partial<{
         lots: {
             perime: boolean;
@@ -78,6 +158,11 @@ export declare class ProduitsController {
             code: string;
             libelle: string;
         } | null;
+        codesBarres: {
+            id: number;
+            code: string;
+            unite: string;
+        }[];
         id: number;
         updatedAt: Date;
         actif: boolean;

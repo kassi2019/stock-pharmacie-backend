@@ -7,6 +7,7 @@ import {
 } from '../referentiels/referentiel-simple';
 import { ProduitsController } from './produits.controller';
 import { ProduitsService } from './produits.service';
+import { ScanDistantController, ScanDistantService } from './scan-distant.controller';
 
 @Module({
   controllers: [
@@ -15,7 +16,8 @@ import { ProduitsService } from './produits.service';
     FamillesController,
     UnitesVenteController,
     FonctionsController,
+    ScanDistantController,
   ],
-  providers: [ProduitsService],
+  providers: [ProduitsService, ScanDistantService],
 })
 export class ProduitsModule {}

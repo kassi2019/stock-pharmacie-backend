@@ -9,11 +9,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ModifierProduitDto = exports.CreerProduitAvecStockDto = exports.CreerProduitDto = void 0;
+exports.ModifierProduitDto = exports.CreerProduitAvecStockDto = exports.CreerProduitDto = exports.CodeBarreDto = void 0;
 const mapped_types_1 = require("@nestjs/mapped-types");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const transformations_1 = require("../common/transformations");
+class CodeBarreDto {
+}
+exports.CodeBarreDto = CodeBarreDto;
+__decorate([
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.replace(/\s+/g, '').toUpperCase() : value)),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^[0-9A-Z.\-_/+]{4,50}$/, { message: 'Code-barres invalide (4 à 50 chiffres ou lettres, sans espace).' }),
+    __metadata("design:type", String)
+], CodeBarreDto.prototype, "code", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['BOITE', 'PLAQUE'], { message: 'Unité du code-barres inconnue.' }),
+    __metadata("design:type", String)
+], CodeBarreDto.prototype, "unite", void 0);
 class CreerProduitDto {
 }
 exports.CreerProduitDto = CreerProduitDto;
@@ -161,6 +175,14 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreerProduitAvecStockDto.prototype, "prixAchat", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMaxSize)(20),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => CodeBarreDto),
+    __metadata("design:type", Array)
+], CreerProduitAvecStockDto.prototype, "codesBarres", void 0);
 class ModifierProduitDto extends (0, mapped_types_1.PartialType)(CreerProduitDto) {
 }
 exports.ModifierProduitDto = ModifierProduitDto;

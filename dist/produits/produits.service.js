@@ -9,9 +9,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProduitsService = void 0;
+exports.ProduitsService = exports.normaliserCode = void 0;
 const common_1 = require("@nestjs/common");
 const droits_1 = require("../auth/droits");
+const CODES_BARRES = { select: { id: true, code: true, unite: true }, orderBy: { id: 'asc' } };
+const normaliserCode = (code) => String(code ?? '').replace(/\s+/g, '').toUpperCase();
+exports.normaliserCode = normaliserCode;
 const constantes_1 = require("../common/constantes");
 const dates_1 = require("../common/dates");
 const codes_1 = require("../common/codes");
@@ -55,6 +58,7 @@ let ProduitsService = class ProduitsService {
             where.OR = [
                 { designation: { contains: filtres.recherche } },
                 { code: { contains: filtres.recherche } },
+                { codesBarres: { some: { code: (0, exports.normaliserCode)(filtres.recherche) } } },
             ];
         }
         if (filtres.etat)
@@ -67,7 +71,7 @@ let ProduitsService = class ProduitsService {
             where.familleId = filtres.familleId;
         const produits = await this.prisma.produit.findMany({
             where,
-            include: { forme: true, famille: true, uniteVente: true },
+            include: { forme: true, famille: true, uniteVente: true, codesBarres: CODES_BARRES },
             orderBy: { designation: 'asc' },
         });
         const stocks = await this.etats.stocksDisponibles(produits.map((p) => p.id));
@@ -80,6 +84,7 @@ let ProduitsService = class ProduitsService {
                 forme: true,
                 famille: true,
                 uniteVente: true,
+                codesBarres: CODES_BARRES,
                 lots: {
                     where: { quantiteRestante: { gt: 0 } },
                     orderBy: { datePeremption: 'asc' },
@@ -142,7 +147,9 @@ let ProduitsService = class ProduitsService {
         return data;
     }
     async creer(dtoComplet, utilisateurId) {
-        const { stockInitial, numeroLot, datePeremption, prixAchat, ...dto } = dtoComplet;
+        const { stockInitial, numeroLot, datePeremption, prixAchat, codesBarres, ...dto } = dtoComplet;
+        for (const c of codesBarres ?? [])
+            await this.verifierCodeLibre(c.code);
         const data = this.donnees({ venteBoite: true, ...dto });
         const avecStock = !!stockInitial && stockInitial > 0;
         let peremption = null;
@@ -191,6 +198,11 @@ let ProduitsService = class ProduitsService {
                 });
                 await tx.produit.update({ where: { id: produit.id }, data: { prixAchatPlaque: prixPlaque } });
             }
+            if (codesBarres?.length) {
+                await tx.codeBarre.createMany({
+                    data: codesBarres.map((c) => ({ produitId: produit.id, code: c.code, unite: this.uniteCode(produit, c.unite) })),
+                });
+            }
             if (avecStock || (dto.seuilAlerte ?? 0) > 0)
                 await this.etats.recalculer([produit.id], tx);
             await this.journal.enregistrer(utilisateurId, 'CREATION', 'PRODUIT', produit.id, dtoComplet, tx);
@@ -229,6 +241,45 @@ let ProduitsService = class ProduitsService {
             apres: dto,
         });
         return p;
+    }
+    async parCodeBarre(code, droits) {
+        const trouve = await this.prisma.codeBarre.findUnique({ where: { code: (0, exports.normaliserCode)(code) } });
+        if (!trouve)
+            throw new common_1.NotFoundException(`Code-barres inconnu : ${(0, exports.normaliserCode)(code)}.`);
+        const produit = await this.trouver(trouve.produitId, droits);
+        return { code: trouve.code, unite: trouve.unite, produit };
+    }
+    async ajouterCodeBarre(produitId, dto, utilisateurId) {
+        const produit = await this.prisma.produit.findUnique({ where: { id: produitId } });
+        if (!produit)
+            throw new common_1.NotFoundException('Produit introuvable.');
+        await this.verifierCodeLibre(dto.code, produitId);
+        const cree = await this.prisma.codeBarre.upsert({
+            where: { code: dto.code },
+            update: { unite: this.uniteCode(produit, dto.unite) },
+            create: { code: dto.code, produitId, unite: this.uniteCode(produit, dto.unite) },
+        });
+        await this.journal.enregistrer(utilisateurId, 'CREATION', 'CODE_BARRE', produitId, { code: cree.code, unite: cree.unite });
+        return cree;
+    }
+    async retirerCodeBarre(produitId, codeId, utilisateurId) {
+        const c = await this.prisma.codeBarre.findUnique({ where: { id: codeId } });
+        if (!c || c.produitId !== produitId)
+            throw new common_1.NotFoundException('Code-barres introuvable.');
+        await this.prisma.codeBarre.delete({ where: { id: codeId } });
+        await this.journal.enregistrer(utilisateurId, 'SUPPRESSION', 'CODE_BARRE', produitId, { code: c.code });
+        return { message: 'Code-barres retiré.' };
+    }
+    async verifierCodeLibre(code, produitId) {
+        const pris = await this.prisma.codeBarre.findUnique({ where: { code }, include: { produit: { select: { id: true, designation: true } } } });
+        if (pris && pris.produitId !== produitId) {
+            throw new common_1.BadRequestException(`Le code-barres ${code} appartient déjà à « ${pris.produit.designation} ».`);
+        }
+    }
+    uniteCode(produit, unite) {
+        if (unite === 'PLAQUE' && produit.ventePlaque)
+            return 'PLAQUE';
+        return produit.venteBoite ? 'BOITE' : 'PLAQUE';
     }
 };
 exports.ProduitsService = ProduitsService;

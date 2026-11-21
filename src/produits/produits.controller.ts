@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { Utilisateur, UtilisateurConnecte } from '../auth/decorateurs';
 import { Acces } from '../auth/droits';
-import { CreerProduitAvecStockDto, ModifierProduitDto } from './produit.dto';
+import { CodeBarreDto, CreerProduitAvecStockDto, ModifierProduitDto } from './produit.dto';
 import { ProduitsService } from './produits.service';
 
 @Controller('produits')
@@ -27,6 +27,33 @@ export class ProduitsController {
       },
       u.permissions,
     );
+  }
+
+  /**
+   * Médicament d'un code-barres (scan à la vente ou sur le téléphone).
+   * (Déclarée AVANT « :id » pour que « code-barre » ne soit pas pris pour un identifiant.)
+   */
+  @Get('code-barre/:code')
+  @Acces('produits:VOIR|dispensation:VOIR')
+  parCodeBarre(@Param('code') code: string, @Utilisateur() u: UtilisateurConnecte) {
+    return this.service.parCodeBarre(code, u.permissions);
+  }
+
+  /** Rattache un code-barres au médicament. */
+  @Post(':id/codes-barres')
+  @Acces('produits:MODIFIER')
+  ajouterCodeBarre(@Param('id', ParseIntPipe) id: number, @Body() dto: CodeBarreDto, @Utilisateur() u: UtilisateurConnecte) {
+    return this.service.ajouterCodeBarre(id, dto, u.id);
+  }
+
+  @Delete(':id/codes-barres/:codeId')
+  @Acces('produits:MODIFIER')
+  retirerCodeBarre(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('codeId', ParseIntPipe) codeId: number,
+    @Utilisateur() u: UtilisateurConnecte,
+  ) {
+    return this.service.retirerCodeBarre(id, codeId, u.id);
   }
 
   @Get(':id')

@@ -31,6 +31,15 @@ let ProduitsController = class ProduitsController {
             familleId: familleId ? Number(familleId) : undefined,
         }, u.permissions);
     }
+    parCodeBarre(code, u) {
+        return this.service.parCodeBarre(code, u.permissions);
+    }
+    ajouterCodeBarre(id, dto, u) {
+        return this.service.ajouterCodeBarre(id, dto, u.id);
+    }
+    retirerCodeBarre(id, codeId, u) {
+        return this.service.retirerCodeBarre(id, codeId, u.id);
+    }
     trouver(id, u) {
         return this.service.trouver(id, u.permissions);
     }
@@ -54,6 +63,35 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], ProduitsController.prototype, "lister", null);
+__decorate([
+    (0, common_1.Get)('code-barre/:code'),
+    (0, droits_1.Acces)('produits:VOIR|dispensation:VOIR'),
+    __param(0, (0, common_1.Param)('code')),
+    __param(1, (0, decorateurs_1.Utilisateur)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ProduitsController.prototype, "parCodeBarre", null);
+__decorate([
+    (0, common_1.Post)(':id/codes-barres'),
+    (0, droits_1.Acces)('produits:MODIFIER'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, decorateurs_1.Utilisateur)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, produit_dto_1.CodeBarreDto, Object]),
+    __metadata("design:returntype", void 0)
+], ProduitsController.prototype, "ajouterCodeBarre", null);
+__decorate([
+    (0, common_1.Delete)(':id/codes-barres/:codeId'),
+    (0, droits_1.Acces)('produits:MODIFIER'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('codeId', common_1.ParseIntPipe)),
+    __param(2, (0, decorateurs_1.Utilisateur)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object]),
+    __metadata("design:returntype", void 0)
+], ProduitsController.prototype, "retirerCodeBarre", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

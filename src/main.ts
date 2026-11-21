@@ -16,6 +16,8 @@ async function bootstrap() {
   app.enableCors({ origin: origines.length === 1 ? origines[0] : origines });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, stopAtFirstError: true }));
   app.useGlobalFilters(new PrismaExceptionFilter());
-  await app.listen(process.env.PORT ?? 3005);
+  // HOTE : adresse d'écoute. Sur le serveur : 127.0.0.1 (Nginx est la seule porte
+  // d'entrée) ; par défaut 0.0.0.0 (poste de la pharmacie, téléphones du Wi-Fi).
+  await app.listen(process.env.PORT ?? 3005, process.env.HOTE || '0.0.0.0');
 }
 bootstrap();
